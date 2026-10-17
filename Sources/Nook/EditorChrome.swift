@@ -2,11 +2,68 @@ import SwiftUI
 
 struct EditorActions {
     let start: () -> Void
+    let startLocal: () -> Void
+    let retryAI: () -> Void
+    let openAISettings: () -> Void
+}
+
+struct AIStatusView: View {
+    @ObservedObject var model: AppModel
+
+    private var status: (label: String, color: Color, planning: Bool) {
+        switch model.planningState {
+        case .planning:
+            return ("AI PLANNING", NookColor.warning, true)
+        case .failed(_):
+            return ("AI ERROR", NookColor.danger, false)
+        case .idle:
+            break
+        }
+        if model.canUseAI {
+            return ("AI READY", NookColor.success, false)
+        }
+        return ("AI NOT CONFIGURED", NookColor.textTertiary, false)
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if status.planning {
+                ProgressView()
+                    .controlSize(.mini)
+                    .scaleEffect(0.72)
+                    .tint(status.color)
+            } else {
+                Circle()
+                    .fill(status.color)
+                    .frame(width: 4, height: 4)
+            }
+            Text(status.label)
+                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                .tracking(0.6)
+                .foregroundStyle(status.color)
+        }
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                .fill(status.color.opacity(0.07))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                .stroke(status.color.opacity(0.15), lineWidth: 0.7)
+        )
+        .help(status.planning ? "AI is planning phrase breaks" : "AI phrasing status")
+    }
 }
 
 struct EditorTopBar: View {
     @ObservedObject var model: AppModel
-    let onStart: () -> Void
+    let actions: EditorActions
+
+    private var isPlanning: Bool {
+        if case .planning = model.planningState { return true }
+        return false
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -28,27 +85,42 @@ struct EditorTopBar: View {
             Spacer(minLength: 12)
 
             HStack(spacing: 12) {
-                LinearSourceBadge(source: model.planSource)
+                AIStatusView(model: model)
 
-                Button("AI settings") {}
-                    .buttonStyle(LinearSecondaryButtonStyle())
-                    .disabled(true)
-                    .help("AI settings arrive in the next task")
+                Button("AI settings") {
+                    actions.openAISettings()
+                }
+                .buttonStyle(LinearSecondaryButtonStyle())
+                .help("Configure AI phrasing")
 
-                Button(action: onStart) {
+                Button {
+                    if isPlanning {
+                        model.cancelPlanning()
+                    } else {
+                        actions.start()
+                    }
+                } label: {
                     HStack(spacing: 8) {
-                        Text("Start")
-                        Text("⌘↩")
-                            .font(.system(size: 10, weight: .medium, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.58))
+                        if isPlanning {
+                            ProgressView()
+                                .controlSize(.mini)
+                                .scaleEffect(0.7)
+                                .tint(.white)
+                            Text("AI phrasing…")
+                        } else {
+                            Text("Start")
+                            Text("⌘↩")
+                                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.58))
+                        }
                     }
                     .fixedSize()
                     .padding(.trailing, 1)
                 }
                 .buttonStyle(LinearPrimaryButtonStyle())
-                .disabled(!model.hasContent)
+                .disabled(!model.hasContent && !isPlanning)
                 .keyboardShortcut(.return, modifiers: [.command])
-                .help("Start the teleprompter (⌘↩)")
+                .help(isPlanning ? "Cancel AI planning (Esc)" : "Start the teleprompter (⌘↩)")
             }
         }
         .padding(.horizontal, 24)
@@ -60,6 +132,74 @@ struct EditorTopBar: View {
                 endPoint: .bottom
             )
         )
+    }
+}
+
+struct PlanningErrorBanner: View {
+    @ObservedObject var model: AppModel
+    let actions: EditorActions
+
+    private var message: String {
+        guard case .failed(let failure) = model.planningState else { return "" }
+        switch failure {
+        case .disabled:
+            return "AI is not configured. Local phrasing is ready."
+        case .unauthorized:
+            return "API key rejected. Check AI settings."
+        case .rateLimited:
+            return "Rate limited. Try again shortly."
+        case .timeout, .network:
+            return "AI unavailable. Check your connection."
+        case .truncated:
+            return "AI response was truncated. Try a shorter script."
+        case .server(let code) where code == 400 || code == 404:
+            return "Endpoint or model rejected (HTTP \(code))."
+        case .server(let code):
+            return "Provider error (HTTP \(code))."
+        case .invalidResponse, .invalidPlan:
+            return "AI returned an unusable plan."
+        case .emptyScript:
+            return "Add a script first."
+        case .tooLong:
+            return "Script is too long for AI phrasing."
+        case .cancelled:
+            return "AI planning was cancelled."
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(NookColor.danger)
+
+            Text(message)
+                .font(.system(size: 11, weight: .regular))
+                .foregroundStyle(NookColor.textPrimary.opacity(0.82))
+                .lineLimit(1)
+
+            Spacer(minLength: 12)
+
+            Button("Retry AI") {
+                actions.retryAI()
+            }
+            .buttonStyle(LinearSecondaryButtonStyle())
+
+            Button("Start locally") {
+                actions.startLocal()
+            }
+            .buttonStyle(LinearSecondaryButtonStyle())
+
+            Button("Settings") {
+                actions.openAISettings()
+            }
+            .buttonStyle(LinearSecondaryButtonStyle())
+        }
+        .padding(.horizontal, 24)
+        .frame(height: 42)
+        .background(NookColor.danger.opacity(0.06))
+        .overlay(alignment: .top) { LinearHairline(color: NookColor.danger.opacity(0.16)) }
+        .overlay(alignment: .bottom) { LinearHairline(color: NookColor.danger.opacity(0.16)) }
     }
 }
 

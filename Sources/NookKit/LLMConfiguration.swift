@@ -1,6 +1,6 @@
 import Foundation
 
-public enum LLMProviderPreset: String, Codable, CaseIterable, Equatable {
+public enum LLMProviderPreset: String, Codable, CaseIterable, Equatable, Hashable {
     case openAI
     case deepSeek
     case openRouter

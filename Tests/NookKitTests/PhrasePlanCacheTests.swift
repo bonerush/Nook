@@ -5,7 +5,7 @@ func runPhrasePlanCacheTests() {
         .appendingPathComponent("nook-cache-\(UUID().uuidString)")
     defer { try? FileManager.default.removeItem(at: directory) }
     do {
-        let cache = try PhrasePlanCache(directory: directory, maxEntries: 2)
+        let cache = PhrasePlanCache(directory: directory, maxEntries: 2)
         let source = "One two three. Four five six."
         let baseKey = PhrasePlanCacheKey(
             model: "test-model",
@@ -25,7 +25,7 @@ func runPhrasePlanCacheTests() {
         cache.save(plan, for: baseKey)
         checkEqual(cache.load(for: baseKey), plan, "Cached plan round-trips")
 
-        let secondCache = try PhrasePlanCache(directory: directory, maxEntries: 2)
+        let secondCache = PhrasePlanCache(directory: directory, maxEntries: 2)
         checkEqual(secondCache.load(for: baseKey), plan, "Cached plan survives a new cache instance")
 
         var otherKey = baseKey
@@ -36,7 +36,7 @@ func runPhrasePlanCacheTests() {
             source: .ai
         )
         do {
-            let cache = try PhrasePlanCache(directory: directory, maxEntries: 1)
+            let cache = PhrasePlanCache(directory: directory, maxEntries: 1)
             cache.save(plan, for: baseKey)
             Thread.sleep(forTimeInterval: 0.02)
             cache.save(otherPlan, for: otherKey)

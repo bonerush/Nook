@@ -201,6 +201,25 @@ struct LinearPrimaryButtonStyle: ButtonStyle {
     }
 }
 
+struct LinearIconButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(NookColor.textSecondary)
+            .frame(width: 24, height: 24)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(configuration.isPressed ? NookColor.raisedHover : NookColor.raised)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(NookColor.border, lineWidth: 0.8)
+            )
+            .opacity(isEnabled ? 1 : 0.34)
+    }
+}
+
 struct LinearSecondaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 

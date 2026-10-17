@@ -35,6 +35,11 @@ struct InspectorPane: View {
         .background(NookColor.pane.opacity(0.34))
     }
 
+    private var hostLabel: String {
+        URL(string: model.llmConfiguration.baseURLString)?.host
+            ?? model.llmConfiguration.baseURLString
+    }
+
     private var sectionDivider: some View {
         LinearHairline()
             .padding(.vertical, 18)
@@ -45,22 +50,40 @@ struct InspectorPane: View {
             LinearSectionLabel(title: "Phrasing", accessory: "AT START")
 
             HStack(spacing: 7) {
-                LinearSourceBadge(source: .local)
-                Text("Local line breaker")
+                LinearSourceBadge(source: model.planSource)
+                Text(model.canUseAI ? "AI phrasing at Start" : "Local line breaker")
                     .font(.system(size: 11, weight: .regular))
                     .foregroundStyle(NookColor.textSecondary)
             }
 
-            Text("AI plans line breaks and pauses at Start.")
+            if model.llmConfiguration.isComplete {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(model.llmConfiguration.model)
+                        .font(.system(size: 9.5, weight: .regular, design: .monospaced))
+                        .foregroundStyle(NookColor.textSecondary)
+                        .lineLimit(1)
+                    Text(hostLabel)
+                        .font(.system(size: 9, weight: .regular, design: .monospaced))
+                        .foregroundStyle(NookColor.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+
+            Text(
+                model.canUseAI
+                    ? "Line breaks and pauses are planned by AI at Start."
+                    : "Local line breaker. Configure AI to phrase at Start."
+            )
                 .font(.system(size: 11, weight: .regular))
                 .foregroundStyle(NookColor.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
 
-            Button("Configure AI") {}
-                .buttonStyle(LinearSecondaryButtonStyle())
-                .disabled(true)
-                .help("AI settings arrive in the next task")
+            Button("Configure AI") {
+                model.openAISettings()
+            }
+            .buttonStyle(LinearSecondaryButtonStyle())
+            .help("Configure the OpenAI-compatible endpoint")
         }
     }
 

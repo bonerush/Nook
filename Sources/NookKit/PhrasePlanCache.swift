@@ -64,12 +64,14 @@ public final class PhrasePlanCache {
         maxEntries: Int = 20,
         maxBytes: Int = 2_000_000,
         fileManager: FileManager = .default
-    ) throws {
+    ) {
         self.directory = directory
         self.maxEntries = max(1, maxEntries)
         self.maxBytes = max(64_000, maxBytes)
         self.fileManager = fileManager
-        try fileManager.createDirectory(
+        // The cache is best-effort. A read-only or missing Application
+        // Support directory must never block app launch or planning.
+        try? fileManager.createDirectory(
             at: directory,
             withIntermediateDirectories: true,
             attributes: [.posixPermissions: 0o700]

@@ -1,5 +1,23 @@
 import Foundation
 
+enum AIPlanningState: Equatable {
+    case idle
+    case planning
+    case failed(AIPlanFailure)
+}
+
+enum ConnectionTestState: Equatable {
+    case idle
+    case testing
+    case success
+    case failure(String)
+}
+
+enum StartPreparation: Equatable {
+    case ready
+    case failed
+}
+
 final class AppModel: ObservableObject {
     private enum Key {
         static let script = "nook.script.v1"
@@ -12,6 +30,7 @@ final class AppModel: ObservableObject {
     @Published var script: String {
         didSet {
             defaults.set(script, forKey: Key.script)
+            invalidateAIPlan()
             scheduleDocumentRebuild()
         }
     }
@@ -26,6 +45,7 @@ final class AppModel: ObservableObject {
     @Published var fontSize: Double {
         didSet {
             defaults.set(fontSize, forKey: Key.fontSize)
+            invalidateAIPlan()
             rebuildDocumentNow()
         }
     }
@@ -33,6 +53,7 @@ final class AppModel: ObservableObject {
     @Published var cardWidth: Double {
         didSet {
             defaults.set(cardWidth, forKey: Key.cardWidth)
+            invalidateAIPlan()
             rebuildDocumentNow()
         }
     }
@@ -45,13 +66,32 @@ final class AppModel: ObservableObject {
 
     @Published private(set) var document: PromptDocument
     @Published private(set) var planSource: PhrasePlanSource = .local
+    @Published private(set) var activePlan: PhrasePlan? = nil
+    @Published private(set) var planningState: AIPlanningState = .idle
+    @Published private(set) var planError: AIPlanFailure? = nil
+
+    @Published private(set) var llmConfiguration: LLMConfiguration
+    @Published private(set) var hasAPIKey: Bool
+    @Published var isAISettingsPresented = false
+    @Published var aiBaseURLDraft: String
+    @Published var aiModelDraft: String
+    @Published var aiPresetDraft: LLMProviderPreset
+    @Published var aiKeyDraft: String = ""
+    @Published private(set) var aiSettingsError: String? = nil
+    @Published private(set) var connectionTestState: ConnectionTestState = .idle
 
     private let defaults: UserDefaults
+    private let keychain: SecretStore
+    private let coordinator: AIPlanningCoordinator
     private var pendingRebuild: DispatchWorkItem?
-    private var lastPlan: PhrasePlan?
+    private var planningTask: Task<Void, Never>?
 
-    init(defaults: UserDefaults = .standard) {
+    init(
+        defaults: UserDefaults = .standard,
+        secretStore: SecretStore = KeychainStore()
+    ) {
         self.defaults = defaults
+        self.keychain = secretStore
 
         defaults.register(defaults: [
             Key.script: SampleScript.interviewIntro,
@@ -72,6 +112,28 @@ final class AppModel: ObservableObject {
         self.cardWidth = loadedWidth
         self.hideFromCapture = defaults.bool(forKey: Key.hideFromCapture)
 
+        let configuration = LLMConfigurationStore.load(defaults: defaults)
+        self.llmConfiguration = configuration
+        self.aiBaseURLDraft = configuration.baseURLString
+        self.aiModelDraft = configuration.model
+        self.aiPresetDraft = configuration.preset
+        let storedKey = (try? secretStore.read()) ?? nil
+        self.hasAPIKey = storedKey?.isEmpty == false
+
+        let base = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let cacheDirectory = base
+            .appendingPathComponent("Nook", isDirectory: true)
+            .appendingPathComponent("PhrasePlans", isDirectory: true)
+        let cache = PhrasePlanCache(directory: cacheDirectory)
+        let client = OpenAICompatibleClient()
+        self.coordinator = AIPlanningCoordinator(
+            fetcher: client,
+            client: client,
+            cache: cache
+        )
+
         let initialOptions = PromptBuildOptions(
             wordsPerMinute: loadedWPM,
             fontSize: CGFloat(loadedFont),
@@ -91,6 +153,7 @@ final class AppModel: ObservableObject {
 
     deinit {
         pendingRebuild?.cancel()
+        planningTask?.cancel()
     }
 
     // MARK: Derived values
@@ -119,6 +182,10 @@ final class AppModel: ObservableObject {
         "\(Int(wordsPerMinute.rounded())) WPM"
     }
 
+    var canUseAI: Bool {
+        llmConfiguration.isComplete && (hasAPIKey || llmConfiguration.isLocalEndpoint)
+    }
+
     // MARK: Editing
 
     func rebuildDocumentNow() {
@@ -134,7 +201,7 @@ final class AppModel: ObservableObject {
             return
         }
 
-        let plan = lastPlan ?? HeuristicPhrasePlanner.makePlan(
+        let plan = activePlan ?? HeuristicPhrasePlanner.makePlan(
             script: parsed,
             options: buildOptions
         )
@@ -165,6 +232,233 @@ final class AppModel: ObservableObject {
 
     func adjustSpeed(by delta: Double) {
         setSpeed(wordsPerMinute + delta)
+    }
+
+    // MARK: AI planning
+
+    func prepareForStart(completion: @escaping (StartPreparation) -> Void) {
+        guard hasContent else {
+            completion(.failed)
+            return
+        }
+        rebuildDocumentNow()
+
+        let key = ((try? keychain.read()) ?? nil) ?? ""
+        guard llmConfiguration.isComplete,
+              !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || llmConfiguration.isLocalEndpoint else {
+            startWithLocalPlan()
+            completion(.ready)
+            return
+        }
+
+        planningTask?.cancel()
+        planningState = .planning
+        planError = nil
+
+        let snapshotText = script
+        let snapshot = ScriptTokenizer.tokenize(snapshotText)
+        let options = buildOptions
+        let configuration = llmConfiguration
+
+        planningTask = Task { [weak self] in
+            guard let self else { return }
+            let result = await self.coordinator.prepare(
+                script: snapshot,
+                options: options,
+                configuration: configuration,
+                apiKey: key
+            )
+            if Task.isCancelled { return }
+            DispatchQueue.main.async {
+                guard self.script == snapshotText else {
+                    self.planningState = .idle
+                    self.planningTask = nil
+                    completion(.failed)
+                    return
+                }
+                self.planningTask = nil
+                switch result {
+                case .fresh(let plan), .cached(let plan):
+                    self.activePlan = plan
+                    self.planSource = .ai
+                    self.planningState = .idle
+                    self.planError = nil
+                    self.rebuildDocumentUsing(plan)
+                    completion(.ready)
+                case .disabled:
+                    self.startWithLocalPlan()
+                    completion(.ready)
+                case .failed(let failure):
+                    if failure == .cancelled {
+                        self.planningState = .idle
+                        return
+                    }
+                    self.planningState = .failed(failure)
+                    self.planError = failure
+                    completion(.failed)
+                }
+            }
+        }
+    }
+
+    func startWithLocalPlan() {
+        planningTask?.cancel()
+        planningTask = nil
+        activePlan = nil
+        planSource = .local
+        planningState = .idle
+        planError = nil
+        rebuildDocumentNow()
+    }
+
+    func cancelPlanning() {
+        planningTask?.cancel()
+        planningTask = nil
+        planningState = .idle
+        planError = nil
+    }
+
+    private func rebuildDocumentUsing(_ plan: PhrasePlan) {
+        let parsed = ScriptTokenizer.tokenize(script)
+        let next = PromptComposer.makeDocument(
+            script: parsed,
+            plan: plan,
+            options: buildOptions
+        )
+        document = next
+        planSource = next.planSource
+    }
+
+    private func invalidateAIPlan() {
+        planningTask?.cancel()
+        planningTask = nil
+        activePlan = nil
+        planSource = .local
+        planningState = .idle
+        planError = nil
+    }
+
+    // MARK: AI settings
+
+    func openAISettings() {
+        aiBaseURLDraft = llmConfiguration.baseURLString
+        aiModelDraft = llmConfiguration.model
+        aiPresetDraft = llmConfiguration.preset
+        aiKeyDraft = ""
+        aiSettingsError = nil
+        connectionTestState = .idle
+        isAISettingsPresented = true
+    }
+
+    func closeAISettings() {
+        isAISettingsPresented = false
+        aiKeyDraft = ""
+        aiSettingsError = nil
+        connectionTestState = .idle
+    }
+
+    func saveAISettings() {
+        let configuration = LLMConfiguration(
+            preset: aiPresetDraft,
+            baseURLString: aiBaseURLDraft,
+            model: aiModelDraft
+        )
+        guard configuration.isComplete else {
+            aiSettingsError = "Enter a valid HTTPS Base URL and model."
+            return
+        }
+        guard LLMConfigurationStore.save(configuration, defaults: defaults) else {
+            aiSettingsError = "This Base URL is not allowed. Remove credentials and query parameters."
+            return
+        }
+        let trimmedKey = aiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedKey.isEmpty {
+            do {
+                try keychain.save(trimmedKey)
+            } catch {
+                aiSettingsError = "Could not save the API key."
+                return
+            }
+        }
+        llmConfiguration = configuration
+        hasAPIKey = ((try? keychain.read()) ?? nil)?.isEmpty == false
+        aiKeyDraft = ""
+        aiSettingsError = nil
+        connectionTestState = .idle
+        isAISettingsPresented = false
+        invalidateAIPlan()
+        rebuildDocumentNow()
+    }
+
+    func clearAPIKey() {
+        try? keychain.delete()
+        hasAPIKey = false
+        aiKeyDraft = ""
+        if !llmConfiguration.isLocalEndpoint {
+            invalidateAIPlan()
+            rebuildDocumentNow()
+        }
+    }
+
+    func testConnection() {
+        let configuration = LLMConfiguration(
+            preset: aiPresetDraft,
+            baseURLString: aiBaseURLDraft,
+            model: aiModelDraft
+        )
+        let draft = aiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stored = ((try? keychain.read()) ?? nil) ?? ""
+        let key = draft.isEmpty ? stored : draft
+        guard configuration.isComplete,
+              !key.isEmpty || configuration.isLocalEndpoint else {
+            connectionTestState = .failure("Configure a valid endpoint, model, and key.")
+            return
+        }
+
+        connectionTestState = .testing
+        let sample = ScriptTokenizer.tokenize("Hello. This is a short connection test.")
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.coordinator.testConnection(
+                    configuration: configuration,
+                    apiKey: key,
+                    sample: sample,
+                    wordsPerMinute: 120
+                )
+                DispatchQueue.main.async {
+                    self.connectionTestState = .success
+                }
+            } catch {
+                let message: String
+                if let phraseError = error as? PhrasePlanningError {
+                    switch phraseError {
+                    case .unauthorized:
+                        message = "API key rejected."
+                    case .rateLimited:
+                        message = "Rate limited. Try again shortly."
+                    case .timeout, .network:
+                        message = "Connection failed. Check the endpoint and network."
+                    case .truncated:
+                        message = "The test response was truncated."
+                    case .server(let code):
+                        message = "Connection failed (HTTP \(code))."
+                    case .notConfigured:
+                        message = "Configure a valid endpoint, model, and key."
+                    case .cancelled:
+                        message = "Connection test cancelled."
+                    case .invalidResponse, .invalidPlan:
+                        message = "The endpoint returned an unusable response."
+                    }
+                } else {
+                    message = "Connection failed. Check the endpoint and model."
+                }
+                DispatchQueue.main.async {
+                    self.connectionTestState = .failure(message)
+                }
+            }
+        }
     }
 
     private func scheduleDocumentRebuild() {

@@ -48,7 +48,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else {
             defaults = .standard
         }
-        model = AppModel(defaults: defaults)
+        model = AppModel(
+            defaults: defaults,
+            secretStore: isPreviewSample ? PreviewSecretStore() : KeychainStore()
+        )
         engine = PlaybackEngine()
         panelController = TeleprompterController(
             model: model,
@@ -72,6 +75,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else {
             DispatchQueue.main.async { [weak self] in
                 self?.openEditor()
+            }
+        }
+
+        if isPreviewSample && CommandLine.arguments.contains("--preview-ai-settings") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+                self?.model.openAISettings()
             }
         }
     }
@@ -393,9 +402,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let existing = editorController {
             controller = existing
         } else {
-            let created = EditorWindowController(model: model) { [weak self] in
-                self?.startPrompter()
-            }
+            let actions = EditorActions(
+                start: { [weak self] in self?.startPrompter() },
+                startLocal: { [weak self] in self?.startLocalPrompter() },
+                retryAI: { [weak self] in self?.startPrompter() },
+                openAISettings: { [weak self] in self?.model.openAISettings() }
+            )
+            let created = EditorWindowController(model: model, actions: actions)
             editorController = created
             controller = created
         }
@@ -404,13 +417,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func startPrompter() {
-        model.rebuildDocumentNow()
         guard model.hasContent else {
             NSSound.beep()
             openEditor()
             return
         }
+        model.prepareForStart { [weak self] result in
+            guard result == .ready else { return }
+            self?.presentPreparedPanel()
+        }
+    }
 
+    private func startLocalPrompter() {
+        guard model.hasContent else {
+            NSSound.beep()
+            openEditor()
+            return
+        }
+        model.startWithLocalPlan()
+        presentPreparedPanel()
+    }
+
+    private func presentPreparedPanel() {
         hideEditorWindow()
         panelController.show(autoplay: true)
         reactivatePreviousApplication()
@@ -547,5 +575,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         """
         alert.addButton(withTitle: "好")
         alert.runModal()
+    }
+}
+private final class PreviewSecretStore: SecretStore {
+    private var value: String?
+
+    func read() throws -> String? {
+        value
+    }
+
+    func save(_ value: String) throws {
+        self.value = value
+    }
+
+    func delete() throws {
+        value = nil
     }
 }

@@ -131,7 +131,11 @@ struct ScriptPane: View {
                 }
             }
 
-            Text("AI will refine line breaks and pauses when you start.")
+            Text(
+                model.planSource == .ai
+                    ? "AI planned these line breaks and pauses."
+                    : "AI will refine line breaks and pauses when you start."
+            )
                 .font(.system(size: 10.5, weight: .regular))
                 .foregroundStyle(NookColor.textTertiary)
         }

@@ -2069,6 +2069,12 @@ git commit -m "feat: rebuild editor with Linear-inspired workspace"
 
 ## Task 10: AI settings, planning state, and Start flow
 
+> **Implementation note (2026-10-18):** The pseudocode below predates the
+> delivered NookKit API. Use the actual names and signatures:
+> `AIPlanResult` / `AIPlanFailure`, `prepare(script:options:configuration:apiKey:)`,
+> `wordsPerMinute:`, and the non-throwing `PhrasePlanCache(directory:)`.
+> The app implementation is the source of truth for these calls.
+
 **Files:**
 - Create: Sources/Nook/AISettingsOverlay.swift
 - Modify: Sources/Nook/AppModel.swift

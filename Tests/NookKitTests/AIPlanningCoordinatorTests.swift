@@ -37,7 +37,7 @@ private func coordinator(
     directory: URL,
     fetcher: MockPhraseFetcher
 ) -> AIPlanningCoordinator {
-    let cache = try! PhrasePlanCache(directory: directory, maxEntries: 4)
+    let cache = PhrasePlanCache(directory: directory, maxEntries: 4)
     return AIPlanningCoordinator(
         fetcher: fetcher,
         client: OpenAICompatibleClient(),

@@ -1,13 +1,12 @@
 import AppKit
 import SwiftUI
 
-final class EditorWindowController: NSWindowController {
+final class EditorWindowController: NSWindowController, NSWindowDelegate {
     private let model: AppModel
 
-    init(model: AppModel, onStart: @escaping () -> Void) {
+    init(model: AppModel, actions: EditorActions) {
         self.model = model
 
-        let actions = EditorActions(start: onStart)
         let editorView = EditorView(model: model, actions: actions)
         let hostingController = NSHostingController(rootView: editorView)
         let window = NSWindow(contentViewController: hostingController)
@@ -39,11 +38,16 @@ final class EditorWindowController: NSWindowController {
         window.standardWindowButton(.zoomButton)?.isHidden = true
 
         super.init(window: window)
+        window.delegate = self
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        model.cancelPlanning()
     }
 
     func showAndFocus() {
