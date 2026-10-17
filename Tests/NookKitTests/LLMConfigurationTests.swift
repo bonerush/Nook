@@ -75,10 +75,10 @@ func runLLMConfigurationTests() {
     let service = "app.nook.tests.keychain.\(UUID().uuidString)"
     let store = KeychainStore(service: service, account: "api-key")
     defer { try? store.delete() }
-    try! store.save("sk-test-value")
-    checkEqual(try! store.read(), "sk-test-value", "Keychain secret round-trips")
-    try! store.save("sk-updated")
-    checkEqual(try! store.read(), "sk-updated", "Keychain secret updates")
+    try! store.save("test-key-value")
+    checkEqual(try! store.read(), "test-key-value", "Keychain secret round-trips")
+    try! store.save("test-key-updated")
+    checkEqual(try! store.read(), "test-key-updated", "Keychain secret updates")
     try! store.delete()
     check(try! store.read() == nil, "Deleted key is absent")
 }

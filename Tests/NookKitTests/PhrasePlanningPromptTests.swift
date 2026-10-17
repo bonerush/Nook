@@ -79,7 +79,7 @@ func runOpenAICompatibleClientTests() {
                 budget: budget,
                 wordsPerMinute: 138,
                 configuration: configuration,
-                apiKey: "sk-test"
+                apiKey: "test-api-key"
             )
         }
         switch result {
@@ -89,7 +89,7 @@ func runOpenAICompatibleClientTests() {
             checkEqual(request.httpMethod, "POST", "Client uses POST")
             checkEqual(
                 request.value(forHTTPHeaderField: "Authorization"),
-                "Bearer sk-test",
+                "Bearer test-api-key",
                 "Client sends bearer key"
             )
             let body = try! JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
@@ -121,7 +121,7 @@ func runOpenAICompatibleClientTests() {
                 budget: budget,
                 wordsPerMinute: 138,
                 configuration: configuration,
-                apiKey: "sk-test"
+                apiKey: "test-api-key"
             )
         }
         switch result {
@@ -144,7 +144,7 @@ func runOpenAICompatibleClientTests() {
                 budget: budget,
                 wordsPerMinute: 138,
                 configuration: configuration,
-                apiKey: "sk-test"
+                apiKey: "test-api-key"
             )
         }
         switch result {
@@ -200,7 +200,7 @@ func runOpenAICompatibleClientTests() {
                 budget: budget,
                 wordsPerMinute: 138,
                 configuration: configuration,
-                apiKey: "sk-test"
+                apiKey: "test-api-key"
             )
         }
         switch result {
@@ -223,7 +223,7 @@ func runOpenAICompatibleClientTests() {
                 budget: budget,
                 wordsPerMinute: 138,
                 configuration: configuration,
-                apiKey: "sk-test"
+                apiKey: "test-api-key"
             )
         }
         switch result {
@@ -246,7 +246,7 @@ func runOpenAICompatibleClientTests() {
                 budget: budget,
                 wordsPerMinute: 138,
                 configuration: configuration,
-                apiKey: "sk-test"
+                apiKey: "test-api-key"
             )
         }
         switch result {
@@ -277,7 +277,7 @@ func runOpenAICompatibleClientTests() {
                 budget: budget,
                 wordsPerMinute: 138,
                 configuration: configuration,
-                apiKey: "sk-test"
+                apiKey: "test-api-key"
             )
         }
         switch result {

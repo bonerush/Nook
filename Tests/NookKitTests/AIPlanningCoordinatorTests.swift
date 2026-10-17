@@ -77,7 +77,7 @@ func runAIPlanningCoordinatorTests() {
             script: coordinatorScript,
             options: coordinatorOptions,
             configuration: coordinatorConfig,
-            apiKey: "sk-test"
+            apiKey: "test-api-key"
         )
     }
     switch first {
@@ -99,7 +99,7 @@ func runAIPlanningCoordinatorTests() {
             script: coordinatorScript,
             options: coordinatorOptions,
             configuration: coordinatorConfig,
-            apiKey: "sk-test"
+            apiKey: "test-api-key"
         )
     }
     switch second {
@@ -120,7 +120,7 @@ func runAIPlanningCoordinatorTests() {
             script: emptyScript,
             options: coordinatorOptions,
             configuration: coordinatorConfig,
-            apiKey: "sk-test"
+            apiKey: "test-api-key"
         )
     }
     checkEqual(empty, .failed(.emptyScript), "Empty scripts fail before networking")
@@ -132,7 +132,7 @@ func runAIPlanningCoordinatorTests() {
             script: longScript,
             options: coordinatorOptions,
             configuration: coordinatorConfig,
-            apiKey: "sk-test"
+            apiKey: "test-api-key"
         )
     }
     checkEqual(tooLong, .failed(.tooLong), "Oversized scripts are rejected before networking")
@@ -147,7 +147,7 @@ func runAIPlanningCoordinatorTests() {
             script: coordinatorScript,
             options: coordinatorOptions,
             configuration: disabledConfig,
-            apiKey: "sk-test"
+            apiKey: "test-api-key"
         )
     }
     checkEqual(disabled, .disabled, "Incomplete configuration is disabled")
@@ -173,7 +173,7 @@ func runAIPlanningCoordinatorTests() {
             script: coordinatorScript,
             options: coordinatorOptions,
             configuration: coordinatorConfig,
-            apiKey: "sk-test"
+            apiKey: "test-api-key"
         )
     }
     checkEqual(malformed, .failed(.invalidPlan), "Malformed plans are rejected")
@@ -189,7 +189,7 @@ func runAIPlanningCoordinatorTests() {
             script: coordinatorScript,
             options: coordinatorOptions,
             configuration: coordinatorConfig,
-            apiKey: "sk-test"
+            apiKey: "test-api-key"
         )
     }
     checkEqual(unauthorized, .failed(.unauthorized), "401 maps to unauthorized")
