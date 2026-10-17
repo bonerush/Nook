@@ -163,6 +163,7 @@ runLLMConfigurationTests()
 runPhrasePlanningPromptTests()
 runOpenAICompatibleClientTests()
 runPhrasePlanCacheTests()
+runAIPlanningCoordinatorTests()
 
 if failures.isEmpty {
     print("PASS — \(testCount) checks")
