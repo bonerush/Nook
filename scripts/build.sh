@@ -26,7 +26,8 @@ swiftc -parse-as-library -O -whole-module-optimization \
     -framework AppKit \
     -framework SwiftUI \
     -framework Carbon \
-    -framework NaturalLanguage
+    -framework NaturalLanguage \
+    -framework Security
 
 cp "$BIN" "$APP/Contents/MacOS/Nook"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"

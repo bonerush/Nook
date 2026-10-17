@@ -159,6 +159,7 @@ print("")
 runSpeechScriptTests()
 runPhrasePlanTests()
 runPromptComposerTests()
+runLLMConfigurationTests()
 
 if failures.isEmpty {
     print("PASS — \(testCount) checks")
