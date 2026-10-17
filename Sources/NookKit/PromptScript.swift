@@ -115,6 +115,7 @@ public struct PromptDocument: Equatable {
     public let paragraphCount: Int
     public let wordsPerMinute: Double
     public let leadIn: TimeInterval
+    public let planSource: PhrasePlanSource
 
     public var isEmpty: Bool { words.isEmpty }
     public var lineCount: Int { lines.count }
@@ -127,7 +128,8 @@ public struct PromptDocument: Equatable {
         sentenceCount: Int,
         paragraphCount: Int,
         wordsPerMinute: Double,
-        leadIn: TimeInterval
+        leadIn: TimeInterval,
+        planSource: PhrasePlanSource = .local
     ) {
         self.words = words
         self.lines = lines
@@ -137,6 +139,7 @@ public struct PromptDocument: Equatable {
         self.paragraphCount = paragraphCount
         self.wordsPerMinute = wordsPerMinute
         self.leadIn = leadIn
+        self.planSource = planSource
     }
 
     public static let empty = PromptDocument(

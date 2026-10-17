@@ -44,9 +44,11 @@ final class AppModel: ObservableObject {
     }
 
     @Published private(set) var document: PromptDocument
+    @Published private(set) var planSource: PhrasePlanSource = .local
 
     private let defaults: UserDefaults
     private var pendingRebuild: DispatchWorkItem?
+    private var lastPlan: PhrasePlan?
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -69,13 +71,21 @@ final class AppModel: ObservableObject {
         self.fontSize = loadedFont
         self.cardWidth = loadedWidth
         self.hideFromCapture = defaults.bool(forKey: Key.hideFromCapture)
-        self.document = PromptScriptBuilder.build(
-            from: loadedScript,
-            options: PromptBuildOptions(
-                wordsPerMinute: loadedWPM,
-                fontSize: CGFloat(loadedFont),
-                cardWidth: CGFloat(loadedWidth)
-            )
+
+        let initialOptions = PromptBuildOptions(
+            wordsPerMinute: loadedWPM,
+            fontSize: CGFloat(loadedFont),
+            cardWidth: CGFloat(loadedWidth)
+        )
+        let initialScript = ScriptTokenizer.tokenize(loadedScript)
+        let initialPlan = HeuristicPhrasePlanner.makePlan(
+            script: initialScript,
+            options: initialOptions
+        )
+        self.document = PromptComposer.makeDocument(
+            script: initialScript,
+            plan: initialPlan,
+            options: initialOptions
         )
     }
 
@@ -115,10 +125,28 @@ final class AppModel: ObservableObject {
         pendingRebuild?.cancel()
         pendingRebuild = nil
 
-        let next = PromptScriptBuilder.build(from: script, options: buildOptions)
+        let parsed = ScriptTokenizer.tokenize(script)
+        guard !parsed.isEmpty else {
+            if document != .empty {
+                document = .empty
+            }
+            planSource = .local
+            return
+        }
+
+        let plan = lastPlan ?? HeuristicPhrasePlanner.makePlan(
+            script: parsed,
+            options: buildOptions
+        )
+        let next = PromptComposer.makeDocument(
+            script: parsed,
+            plan: plan,
+            options: buildOptions
+        )
         if next != document {
             document = next
         }
+        planSource = next.planSource
     }
 
     func loadSample() {

@@ -158,6 +158,7 @@ do {
 print("")
 runSpeechScriptTests()
 runPhrasePlanTests()
+runPromptComposerTests()
 
 if failures.isEmpty {
     print("PASS — \(testCount) checks")
