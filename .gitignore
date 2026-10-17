@@ -4,3 +4,5 @@ dist/
 *.xcodeproj
 
 Resources/Nook.iconset/
+
+.superpowers/
