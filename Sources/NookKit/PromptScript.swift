@@ -381,7 +381,7 @@ public enum PromptScriptBuilder {
 
     // MARK: Text cleanup
 
-    private static func paragraphStrings(from rawText: String) -> [String] {
+    static func paragraphStrings(from rawText: String) -> [String] {
         let normalized = rawText
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
@@ -409,7 +409,7 @@ public enum PromptScriptBuilder {
         return paragraphs
     }
 
-    private static func tokenize(_ sentence: String) -> [String] {
+    static func tokenize(_ sentence: String) -> [String] {
         var tokens: [String] = []
 
         // A spoken em dash deserves its own beat. Keep it glued to the word
@@ -457,7 +457,7 @@ public enum PromptScriptBuilder {
         return pieces
     }
 
-    private static func splitSentences(in paragraph: String) -> [String] {
+    static func splitSentences(in paragraph: String) -> [String] {
         let tokenizer = NLTokenizer(unit: .sentence)
         tokenizer.string = paragraph
         tokenizer.setLanguage(preferredLanguage(for: paragraph))

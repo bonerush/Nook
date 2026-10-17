@@ -14,10 +14,11 @@ mkdir -p "$ROOT/.build/dev"
 echo "Running prompt-engine checks…"
 swiftc -O \
     -sdk "$SDK" -target "$TARGET" \
-    "$ROOT/Sources/NookKit/PromptScript.swift" \
-    "$ROOT/Tests/NookKitTests/main.swift" \
+    "$ROOT"/Sources/NookKit/*.swift \
+    "$ROOT"/Tests/NookKitTests/*.swift \
     -o "$ROOT/.build/dev/nook-tests" \
     -framework AppKit \
-    -framework NaturalLanguage
+    -framework NaturalLanguage \
+    -framework Security
 
 "$ROOT/.build/dev/nook-tests"
