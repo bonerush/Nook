@@ -157,6 +157,7 @@ do {
 
 print("")
 runSpeechScriptTests()
+runPhrasePlanTests()
 
 if failures.isEmpty {
     print("PASS — \(testCount) checks")

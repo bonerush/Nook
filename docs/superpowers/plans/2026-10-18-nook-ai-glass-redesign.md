@@ -358,7 +358,7 @@ func runPhrasePlanTests() {
     }
 
     let crossSentence = PhrasePlan(
-        groups: [PhraseGroup(start: 0, end: 3, pauseAfterMs: nil)],
+        groups: [PhraseGroup(start: 0, end: 5, pauseAfterMs: nil)],
         emphasis: [],
         source: .ai
     )
@@ -398,6 +398,7 @@ func runPhrasePlanTests() {
         checkEqual(error, .outOfBounds(8), "Out-of-bounds index is reported")
     }
 
+    let single = ScriptTokenizer.tokenize("One two three four five six.")
     let orphan = PhrasePlan(
         groups: [
             PhraseGroup(start: 0, end: 0, pauseAfterMs: nil),
@@ -406,7 +407,7 @@ func runPhrasePlanTests() {
         emphasis: [],
         source: .ai
     )
-    switch PhrasePlanValidator.validate(orphan, against: script, budget: budget) {
+    switch PhrasePlanValidator.validate(orphan, against: single, budget: budget) {
     case .success(let normalized):
         checkEqual(normalized.groups.count, 1, "Single-word orphan merges with its neighbor")
     case .failure(let error):
@@ -418,7 +419,7 @@ func runPhrasePlanTests() {
         emphasis: [99],
         source: .ai
     )
-    switch PhrasePlanValidator.validate(pausePlan, against: script, budget: budget) {
+    switch PhrasePlanValidator.validate(pausePlan, against: single, budget: budget) {
     case .success(let normalized):
         checkEqual(normalized.groups[0].pauseAfterMs, 400, "Pause is clamped to 400ms")
         check(normalized.emphasis.isEmpty, "Invalid emphasis indexes are removed")
