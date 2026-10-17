@@ -70,7 +70,8 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func focusScriptEditor() {
-        guard let window,
+        guard !model.isAISettingsPresented,
+              let window,
               let textView = window.contentView?.nookFirstEditableTextView else {
             return
         }

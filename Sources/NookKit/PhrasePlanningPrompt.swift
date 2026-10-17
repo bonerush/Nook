@@ -1,7 +1,7 @@
 import Foundation
 
 public enum PhrasePlanningPrompt {
-    public static let version = 4
+    public static let version = 5
 
     public static let systemText = """
     You are a phrase planner for a teleprompter. Return strict JSON only.
@@ -22,15 +22,6 @@ public enum PhrasePlanningPrompt {
         budget: PhraseBudget,
         wordsPerMinute: Int
     ) -> String {
-        let tokenObjects: [[String: Any]] = script.tokens.map {
-            ["id": $0.id, "text": $0.text]
-        }
-        let tokenData = (try? JSONSerialization.data(
-            withJSONObject: tokenObjects,
-            options: [.sortedKeys]
-        )) ?? Data("[]".utf8)
-        let tokenJSON = String(data: tokenData, encoding: .utf8) ?? "[]"
-
         let grouped = Dictionary(grouping: script.tokens, by: \.sentenceIndex)
         let sentenceObjects: [[String: Any]] = grouped.keys.sorted().map { sentence in
             [
@@ -66,9 +57,6 @@ public enum PhrasePlanningPrompt {
 
         SENTENCE GROUPS:
         \(sentenceJSON)
-
-        TOKENS:
-        \(tokenJSON)
         """
     }
 }

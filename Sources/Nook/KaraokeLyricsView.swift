@@ -10,7 +10,7 @@ struct KaraokeWordView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var baseColor: Color {
-        activeLine ? .white.opacity(0.60) : .white.opacity(0.86)
+        activeLine ? .white.opacity(0.68) : .white.opacity(0.86)
     }
 
     var body: some View {
