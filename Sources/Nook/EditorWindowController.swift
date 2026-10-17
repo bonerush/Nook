@@ -7,7 +7,8 @@ final class EditorWindowController: NSWindowController {
     init(model: AppModel, onStart: @escaping () -> Void) {
         self.model = model
 
-        let editorView = EditorView(model: model, onStart: onStart)
+        let actions = EditorActions(start: onStart)
+        let editorView = EditorView(model: model, actions: actions)
         let hostingController = NSHostingController(rootView: editorView)
         let window = NSWindow(contentViewController: hostingController)
 
@@ -21,14 +22,21 @@ final class EditorWindowController: NSWindowController {
         window.backgroundColor = NSColor(
             calibratedRed: 0.031,
             green: 0.035,
-            blue: 0.047,
+            blue: 0.043,
             alpha: 1
         )
         window.appearance = NSAppearance(named: .darkAqua)
-        window.minSize = NSSize(width: 920, height: 680)
-        window.contentMinSize = NSSize(width: 920, height: 680)
-        window.setContentSize(NSSize(width: 1000, height: 720))
+        window.minSize = NSSize(width: 960, height: 680)
+        window.contentMinSize = NSSize(width: 960, height: 680)
+        window.setContentSize(NSSize(width: 1040, height: 720))
         window.center()
+
+        // The Linear shell owns its own chrome and starts at the very top of
+        // the window. Hide the native traffic lights so they cannot collide
+        // with the wordmark; Close and Minimize remain available in the menus.
+        window.standardWindowButton(.closeButton)?.isHidden = true
+        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        window.standardWindowButton(.zoomButton)?.isHidden = true
 
         super.init(window: window)
     }

@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let isDemo =
         CommandLine.arguments.contains("--demo")
         || ProcessInfo.processInfo.environment["NOOK_DEMO"] == "1"
+    private let isPreviewSample = CommandLine.arguments.contains("--preview-sample")
 
     // MARK: Lifecycle
 
@@ -39,7 +40,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.setActivationPolicy(.accessory)
         NSApp.appearance = NSAppearance(named: .darkAqua)
 
-        model = AppModel()
+        let defaults: UserDefaults
+        if isPreviewSample {
+            let suite = "app.nook.design-preview"
+            defaults = UserDefaults(suiteName: suite)!
+            defaults.removePersistentDomain(forName: suite)
+        } else {
+            defaults = .standard
+        }
+        model = AppModel(defaults: defaults)
         engine = PlaybackEngine()
         panelController = TeleprompterController(
             model: model,
@@ -48,13 +57,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         )
 
         configureMainMenu()
-        configureStatusItem()
-        installHotKeys()
-        observeWorkspace()
+        if !isPreviewSample {
+            configureStatusItem()
+            installHotKeys()
+            observeWorkspace()
+        }
         observeScreens()
         observePlayback()
 
-        if isDemo {
+        if isDemo && !isPreviewSample {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
                 self?.panelController.show(autoplay: true)
             }
