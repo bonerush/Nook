@@ -48,6 +48,30 @@ func runLLMConfigurationTests() {
     let encoded = String(data: try! JSONEncoder().encode(config), encoding: .utf8) ?? ""
     check(!encoded.lowercased().contains("apikey"), "Configuration never contains a key field")
 
+    let unsafe = LLMConfiguration(
+        preset: .custom,
+        baseURLString: "https://user:secret@example.com/v1?token=leak",
+        model: "model"
+    )
+    check(unsafe.endpointURL == nil, "Userinfo and query credentials are rejected")
+    check(unsafe.isComplete == false, "Credential-bearing URL is not usable")
+    defaults.removePersistentDomain(forName: "app.nook.llm-tests")
+    check(
+        LLMConfigurationStore.save(unsafe, defaults: defaults) == false,
+        "Unsafe configuration is not persisted"
+    )
+    check(
+        defaults.data(forKey: "nook.llm.configuration.v1") == nil,
+        "No unsafe bytes reach UserDefaults"
+    )
+
+    let unsafeHTTP = LLMConfiguration(
+        preset: .custom,
+        baseURLString: "https://example.com/v1?api_key=dynamic",
+        model: "model"
+    )
+    check(unsafeHTTP.endpointURL == nil, "Query parameters are always rejected")
+
     let service = "app.nook.tests.keychain.\(UUID().uuidString)"
     let store = KeychainStore(service: service, account: "api-key")
     defer { try? store.delete() }

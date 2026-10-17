@@ -40,19 +40,32 @@ public struct LLMConfiguration: Codable, Equatable {
         self.model = model.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    public var endpointURL: URL? {
+    private var parsedComponents: URLComponents? {
         let trimmed = baseURLString.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty,
-              var components = URLComponents(string: trimmed),
+              let components = URLComponents(string: trimmed),
               let scheme = components.scheme?.lowercased(),
               let host = components.host?.lowercased(),
               ["https", "http"].contains(scheme) else {
+            return nil
+        }
+        // Credentials and query parameters must never be stored in the base
+        // URL. They belong in Keychain or in headers, not UserDefaults.
+        guard components.user == nil,
+              components.password == nil,
+              components.query == nil,
+              components.fragment == nil else {
             return nil
         }
         if scheme == "http" {
             let local = host == "localhost" || host == "127.0.0.1" || host == "::1"
             guard local else { return nil }
         }
+        return components
+    }
+
+    public var endpointURL: URL? {
+        guard var components = parsedComponents else { return nil }
         let path = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         if path.hasSuffix("chat/completions") {
             components.path = "/" + path
@@ -64,6 +77,11 @@ public struct LLMConfiguration: Codable, Equatable {
         components.query = nil
         components.fragment = nil
         return components.url
+    }
+
+    public var isLocalEndpoint: Bool {
+        guard let host = parsedComponents?.host?.lowercased() else { return false }
+        return host == "localhost" || host == "127.0.0.1" || host == "::1"
     }
 
     public var isComplete: Bool {
@@ -79,15 +97,26 @@ public enum LLMConfigurationStore {
               let config = try? JSONDecoder().decode(LLMConfiguration.self, from: data) else {
             return LLMConfiguration(preset: .custom, baseURLString: "", model: "")
         }
+        // Never surface a legacy URL that may carry embedded credentials.
+        if !config.baseURLString.isEmpty, config.endpointURL == nil {
+            return LLMConfiguration(preset: .custom, baseURLString: "", model: config.model)
+        }
         return config
     }
 
+    @discardableResult
     public static func save(
         _ config: LLMConfiguration,
         defaults: UserDefaults = .standard
-    ) {
-        if let data = try? JSONEncoder().encode(config) {
-            defaults.set(data, forKey: key)
+    ) -> Bool {
+        let hasBaseURL = !config.baseURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if hasBaseURL, config.endpointURL == nil {
+            return false
         }
+        guard let data = try? JSONEncoder().encode(config) else {
+            return false
+        }
+        defaults.set(data, forKey: key)
+        return true
     }
 }

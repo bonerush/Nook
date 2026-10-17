@@ -17,6 +17,9 @@ public enum AIPlanFailure: Error, Equatable {
     case unauthorized
     case rateLimited
     case timeout
+    case network
+    case truncated
+    case cancelled
     case server(Int)
     case invalidResponse
     case invalidPlan
@@ -56,7 +59,7 @@ public final class AIPlanningCoordinator {
             return .disabled
         }
         let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !key.isEmpty else {
+        guard !key.isEmpty || configuration.isLocalEndpoint else {
             return .disabled
         }
         guard !script.tokens.isEmpty else {
@@ -74,6 +77,7 @@ public final class AIPlanningCoordinator {
             model: configuration.model,
             promptVersion: PhrasePlanningPrompt.version,
             scriptHash: PhrasePlanCacheKey.hash(script.sourceText),
+            tokenizerVersion: script.tokenizerVersion,
             wordsPerMinute: Int(options.wordsPerMinute.rounded()),
             budgetWords: budget.maxWords,
             budgetCharacters: budget.maxCharacters
@@ -195,6 +199,12 @@ public final class AIPlanningCoordinator {
                 return .rateLimited
             case .timeout:
                 return .timeout
+            case .network:
+                return .network
+            case .truncated:
+                return .truncated
+            case .cancelled:
+                return .cancelled
             case .server(let code):
                 return .server(code)
             case .invalidResponse:

@@ -64,10 +64,12 @@ func runPhrasePlanTests() {
         source: .ai
     )
     switch PhrasePlanValidator.validate(missing, against: script, budget: budget) {
-    case .success:
-        check(false, "Missing coverage must be rejected")
+    case .success(let normalized):
+        checkEqual(normalized.groups.count, 2, "Gap is filled with a local group")
+        checkEqual(normalized.groups.last?.end, 5, "Gap repair reaches the final token")
+        checkEqual(normalized.source, .ai, "Gap repair preserves the AI source")
     case .failure(let error):
-        checkEqual(error, .missingIndex(3), "Gap reports the first missing index")
+        check(false, "Gap should be repairable: \(error)")
     }
 
     let outOfBounds = PhrasePlan(

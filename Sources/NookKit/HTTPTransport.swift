@@ -9,11 +9,35 @@ public protocol HTTPTransport {
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse)
 }
 
+private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate {
+    static let shared = NoRedirectDelegate()
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        completionHandler(nil)
+    }
+}
+
 public final class URLSessionHTTPTransport: HTTPTransport {
     private let session: URLSession
 
-    public init(session: URLSession = .shared) {
-        self.session = session
+    public init(session: URLSession? = nil) {
+        if let session {
+            self.session = session
+        } else {
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.urlCache = nil
+            self.session = URLSession(
+                configuration: configuration,
+                delegate: NoRedirectDelegate.shared,
+                delegateQueue: nil
+            )
+        }
     }
 
     public func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {

@@ -7,7 +7,9 @@ public enum PromptComposer {
         options: PromptBuildOptions
     ) -> PromptDocument {
         let base = PromptScriptBuilder.build(from: script.sourceText, options: options)
-        guard !script.tokens.isEmpty, base.words.count == script.tokens.count else {
+        guard !script.tokens.isEmpty,
+              base.words.count == script.tokens.count,
+              base.words.map(\.text) == script.tokens.map(\.text) else {
             return base
         }
 
@@ -22,19 +24,38 @@ public enum PromptComposer {
         ) else {
             return base
         }
-        guard normalized.source == .ai else {
-            return base
+        var laidOutGroups: [PhraseGroup] = []
+        for group in normalized.groups {
+            let pieces = PhraseLayout.split(
+                tokens: script.tokens,
+                range: group.start...group.end,
+                fontSize: options.fontSize,
+                maxWidth: options.availableWidth
+            )
+            for (index, piece) in pieces.enumerated() {
+                laidOutGroups.append(
+                    PhraseGroup(
+                        start: piece.lowerBound,
+                        end: piece.upperBound,
+                        pauseAfterMs: index == pieces.count - 1 ? group.pauseAfterMs : nil
+                    )
+                )
+            }
         }
-
-        return composeAIDocument(
+        let laidOut = PhrasePlan(
+            groups: laidOutGroups,
+            emphasis: normalized.emphasis,
+            source: normalized.source
+        )
+        return composeDocument(
             script: script,
-            plan: normalized,
+            plan: laidOut,
             base: base,
             options: options
         )
     }
 
-    private static func composeAIDocument(
+    private static func composeDocument(
         script: SpeechScript,
         plan: PhrasePlan,
         base: PromptDocument,
@@ -131,7 +152,7 @@ public enum PromptComposer {
             paragraphCount: script.paragraphCount,
             wordsPerMinute: options.wordsPerMinute,
             leadIn: options.leadIn,
-            planSource: .ai
+            planSource: plan.source
         )
     }
 }

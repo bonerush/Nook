@@ -11,6 +11,7 @@ func runPhrasePlanCacheTests() {
             model: "test-model",
             promptVersion: 1,
             scriptHash: PhrasePlanCacheKey.hash(source),
+            tokenizerVersion: ScriptTokenizer.version,
             wordsPerMinute: 138,
             budgetWords: 6,
             budgetCharacters: 40

@@ -74,28 +74,47 @@ public enum PhrasePlanValidator {
             return .failure(.emptyPlan)
         }
 
-        // Coverage and order are checked before any repair.
+        // Repair gaps and out-of-order groups before checking coverage. Missing
+        // ranges become plain groups; the composer will measure and split them.
+        let sortedGroups = plan.groups.sorted { lhs, rhs in
+            if lhs.start == rhs.start { return lhs.end < rhs.end }
+            return lhs.start < rhs.start
+        }
+        var covered: [PhraseGroup] = []
         var expectedStart = 0
-        for group in plan.groups {
+        for group in sortedGroups {
             guard group.start >= 0, group.end < script.tokens.count, group.start <= group.end else {
                 return .failure(.outOfBounds(max(group.start, group.end)))
-            }
-            if group.start > expectedStart {
-                return .failure(.missingIndex(expectedStart))
             }
             if group.start < expectedStart {
                 return .failure(.overlapAt(group.start))
             }
+            if group.start > expectedStart {
+                covered.append(
+                    PhraseGroup(
+                        start: expectedStart,
+                        end: group.start - 1,
+                        pauseAfterMs: nil
+                    )
+                )
+            }
+            covered.append(group)
             expectedStart = group.end + 1
         }
         if expectedStart < script.tokens.count {
-            return .failure(.missingIndex(expectedStart))
+            covered.append(
+                PhraseGroup(
+                    start: expectedStart,
+                    end: script.tokens.count - 1,
+                    pauseAfterMs: nil
+                )
+            )
         }
 
         // Split groups that cross a sentence boundary. The original pause
         // stays on the last fragment only.
         var repaired: [PhraseGroup] = []
-        for group in plan.groups {
+        for group in covered {
             var fragmentStart = group.start
             var previousSentence = script.tokens[fragmentStart].sentenceIndex
             if group.start < group.end {
@@ -123,77 +142,44 @@ public enum PhrasePlanValidator {
             )
         }
 
-        // Enforce the word/character budget with deterministic local splits.
-        var budgeted: [PhraseGroup] = []
-        for group in repaired {
-            let tokens = Array(script.tokens[group.start...group.end])
-            var chunkStart = 0
-            var currentWords = 0
-            var currentCharacters = 0
-
-            for offset in tokens.indices {
-                let tokenLength = tokens[offset].text.count
-                let addition = tokenLength + (currentWords == 0 ? 0 : 1)
-                let wouldOverflow = currentWords >= budget.maxWords
-                    || currentCharacters + addition > budget.maxCharacters
-                if currentWords > 0, wouldOverflow {
-                    let start = group.start + chunkStart
-                    let end = group.start + offset - 1
-                    budgeted.append(
-                        PhraseGroup(start: start, end: end, pauseAfterMs: nil)
-                    )
-                    chunkStart = offset
-                    currentWords = 0
-                    currentCharacters = 0
-                }
-                currentWords += 1
-                currentCharacters += tokenLength + (currentWords == 1 ? 0 : 1)
-            }
-
-            let start = group.start + chunkStart
-            budgeted.append(
-                PhraseGroup(
-                    start: start,
-                    end: group.end,
-                    pauseAfterMs: group.pauseAfterMs
-                )
-            )
-        }
-
-        // Merge one-word orphan fragments when the merged line still fits and
-        // the merge does not cross a sentence boundary.
-        var merged: [PhraseGroup] = []
-        var index = 0
-        while index < budgeted.count {
-            var group = budgeted[index]
-            if group.wordCount == 1 {
-                if let previous = merged.last,
-                   previous.end + 1 == group.start,
-                   script.tokens[previous.end].sentenceIndex == script.tokens[group.start].sentenceIndex {
-                    let combined = combine(previous, group, tokens: script.tokens)
-                    if fits(combined, budget: budget, tokens: script.tokens) {
-                        merged[merged.count - 1] = combined
-                        index += 1
-                        continue
-                    }
-                }
-                if index + 1 < budgeted.count {
-                    let next = budgeted[index + 1]
-                    if group.end + 1 == next.start,
-                       script.tokens[group.start].sentenceIndex == script.tokens[next.start].sentenceIndex {
-                        let combined = combine(group, next, tokens: script.tokens)
+        // Local plans come from the measured legacy line breaker. Trust their
+        // groups; only AI plans get orphan cleanup.
+        var merged: [PhraseGroup] = repaired
+        if plan.source == .ai {
+            var cleaned: [PhraseGroup] = []
+            var index = 0
+            while index < repaired.count {
+                var group = repaired[index]
+                if group.wordCount == 1 {
+                    if let previous = cleaned.last,
+                       previous.end + 1 == group.start,
+                       script.tokens[previous.end].sentenceIndex == script.tokens[group.start].sentenceIndex {
+                        let combined = combine(previous, group, tokens: script.tokens)
                         if fits(combined, budget: budget, tokens: script.tokens) {
-                            group = combined
-                            index += 1
-                            merged.append(group)
+                            cleaned[cleaned.count - 1] = combined
                             index += 1
                             continue
                         }
                     }
+                    if index + 1 < repaired.count {
+                        let next = repaired[index + 1]
+                        if group.end + 1 == next.start,
+                           script.tokens[group.start].sentenceIndex == script.tokens[next.start].sentenceIndex {
+                            let combined = combine(group, next, tokens: script.tokens)
+                            if fits(combined, budget: budget, tokens: script.tokens) {
+                                group = combined
+                                index += 1
+                                cleaned.append(group)
+                                index += 1
+                                continue
+                            }
+                        }
+                    }
                 }
+                cleaned.append(group)
+                index += 1
             }
-            merged.append(group)
-            index += 1
+            merged = cleaned
         }
 
         // Clamp pauses and filter emphasis indexes. Invalid emphasis is never
@@ -206,9 +192,6 @@ public enum PhrasePlanValidator {
             return copy
         }
         let validEmphasis = plan.emphasis.filter { $0 >= 0 && $0 < script.tokens.count }
-        if clamped.contains(where: { $0.wordCount > budget.maxWords }) {
-            return .failure(.exceedsWordBudget(clamped.first(where: { $0.wordCount > budget.maxWords })!.start))
-        }
         return .success(
             PhrasePlan(
                 groups: clamped,
