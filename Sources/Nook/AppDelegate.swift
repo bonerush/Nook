@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var screenObserver: NSObjectProtocol?
     private var workspaceObserver: NSObjectProtocol?
     private var previousApp: NSRunningApplication?
+    private var previewBackdrop: NSWindow?
 
     private var headerItem: NSMenuItem!
     private var playPauseItem: NSMenuItem!
@@ -68,7 +69,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         observeScreens()
         observePlayback()
 
-        if isDemo && !isPreviewSample {
+        if isPreviewSample && isDemo {
+            installPreviewBackdrop()
+        }
+
+        if isDemo {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
                 self?.panelController.show(autoplay: true)
             }
@@ -81,6 +86,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if isPreviewSample && CommandLine.arguments.contains("--preview-ai-settings") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
                 self?.model.openAISettings()
+            }
+        }
+
+        if isPreviewSample && isDemo && CommandLine.arguments.contains("--preview-paused") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+                self?.engine.pause()
             }
         }
     }
@@ -106,6 +117,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             NSWorkspace.shared.notificationCenter.removeObserver(workspaceObserver)
         }
         panelController?.hide(animated: false, pause: true)
+        previewBackdrop?.orderOut(nil)
+    }
+
+    // MARK: Preview stage
+
+    private func installPreviewBackdrop() {
+        guard previewBackdrop == nil else { return }
+        let screen = NSScreen.screens.first { $0.safeAreaInsets.top > 0 } ?? NSScreen.main
+        guard let screen else { return }
+        let window = NSWindow(
+            contentRect: screen.frame,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        window.backgroundColor = .black
+        window.isOpaque = true
+        window.level = .normal
+        window.ignoresMouseEvents = true
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        window.contentView = NSHostingView(rootView: PreviewBackdropView())
+        window.orderFrontRegardless()
+        previewBackdrop = window
     }
 
     // MARK: Menu bar item
@@ -590,5 +624,45 @@ private final class PreviewSecretStore: SecretStore {
 
     func delete() throws {
         value = nil
+    }
+}
+struct PreviewBackdropView: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.05, green: 0.07, blue: 0.13),
+                    Color(red: 0.20, green: 0.24, blue: 0.52),
+                    Color(red: 0.72, green: 0.40, blue: 0.28),
+                    Color(red: 0.05, green: 0.06, blue: 0.09)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            VStack(spacing: 18) {
+                Text("NOOK")
+                    .font(.system(size: 128, weight: .black, design: .rounded))
+                    .tracking(-6)
+                    .foregroundStyle(.white.opacity(0.10))
+                Text("OFFICIAL GLASS · LYRIC STAGE")
+                    .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                    .tracking(4)
+                    .foregroundStyle(.white.opacity(0.24))
+            }
+
+            Circle()
+                .fill(Color(red: 0.48, green: 0.52, blue: 1.0).opacity(0.45))
+                .frame(width: 460, height: 460)
+                .blur(radius: 90)
+                .offset(x: 330, y: -260)
+
+            Circle()
+                .fill(Color(red: 1.0, green: 0.62, blue: 0.36).opacity(0.30))
+                .frame(width: 380, height: 380)
+                .blur(radius: 100)
+                .offset(x: -360, y: 210)
+        }
+        .ignoresSafeArea()
     }
 }
