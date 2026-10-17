@@ -4,8 +4,7 @@ func runPhrasePlanCacheTests() {
     let directory = FileManager.default.temporaryDirectory
         .appendingPathComponent("nook-cache-\(UUID().uuidString)")
     defer { try? FileManager.default.removeItem(at: directory) }
-    do {
-        let cache = PhrasePlanCache(directory: directory, maxEntries: 2)
+    let cache = PhrasePlanCache(directory: directory, maxEntries: 2)
         let source = "One two three. Four five six."
         let baseKey = PhrasePlanCacheKey(
             model: "test-model",
@@ -52,7 +51,7 @@ func runPhrasePlanCacheTests() {
         var wpmDifferent = baseKey
         wpmDifferent.wordsPerMinute = 150
         check(wpmDifferent != baseKey, "Different WPM produces different cache keys")
-    } catch {
-        check(false, "Cache setup failed: \(error)")
-    }
+        var tokenizerDifferent = baseKey
+        tokenizerDifferent.tokenizerVersion = ScriptTokenizer.version + 1
+        check(tokenizerDifferent != baseKey, "Different tokenizer versions produce different cache keys")
 }

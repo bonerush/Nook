@@ -12,6 +12,10 @@ func runPhrasePlanningPromptTests() {
     check(prompt.contains("0...\(script.tokens.count - 1)"), "Prompt states the valid index range")
     check(prompt.contains("Never rewrite"), "Prompt carries the no-rewrite rule")
     check(prompt.contains("\"id\":0"), "Prompt includes stable token ids")
+    check(prompt.contains("40 characters"), "Prompt carries the character budget")
+    check(prompt.contains("14 tokens"), "Prompt states the token count")
+    check(prompt.contains("untrusted data"), "Prompt treats the script as data")
+    checkEqual(PhrasePlanningPrompt.version, 2, "Prompt version is bumped with the contract")
 }
 
 private final class MockHTTPTransport: HTTPTransport {
@@ -91,6 +95,17 @@ func runOpenAICompatibleClientTests() {
             let body = try! JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
             checkEqual(body["model"] as? String, "test-model", "Client sends the model")
             checkEqual(body["max_tokens"] as? Int, 900, "Client caps output tokens")
+            checkEqual(body["stream"] as? Bool, false, "Client requests a non-streaming response")
+            checkEqual(
+                request.value(forHTTPHeaderField: "Content-Type"),
+                "application/json",
+                "Client sends JSON"
+            )
+            checkEqual(
+                request.url?.absoluteString,
+                "https://example.com/v1/chat/completions",
+                "Client uses the configured endpoint"
+            )
             checkEqual(request.timeoutInterval, 12, "Client uses a 12s timeout")
         case .failure(let error):
             check(false, "Client success path failed: \(error)")
@@ -141,4 +156,138 @@ func runOpenAICompatibleClientTests() {
             check(false, "Timeout must fail")
         }
     }
+
+    // Keyless local endpoints are allowed and omit the Authorization header.
+    do {
+        let transport = MockHTTPTransport()
+        let envelope: [String: Any] = [
+            "choices": [["message": ["content": plan]]]
+        ]
+        transport.responseData = try! JSONSerialization.data(withJSONObject: envelope)
+        let localConfiguration = LLMConfiguration(
+            preset: .custom,
+            baseURLString: "http://127.0.0.1:8080/v1",
+            model: "local-model"
+        )
+        let client = OpenAICompatibleClient(transport: transport)
+        let result = awaitResult {
+            try await client.fetchPlanText(
+                script: script,
+                budget: budget,
+                wordsPerMinute: 138,
+                configuration: localConfiguration,
+                apiKey: ""
+            )
+        }
+        switch result {
+        case .success:
+            check(
+                transport.capturedRequest?.value(forHTTPHeaderField: "Authorization") == nil,
+                "Keyless local request omits Authorization"
+            )
+        case .failure(let error):
+            check(false, "Keyless local request failed: \(error)")
+        }
+    }
+
+    do {
+        let transport = MockHTTPTransport()
+        transport.statusCode = 403
+        let client = OpenAICompatibleClient(transport: transport)
+        let result = awaitResult {
+            try await client.fetchPlanText(
+                script: script,
+                budget: budget,
+                wordsPerMinute: 138,
+                configuration: configuration,
+                apiKey: "sk-test"
+            )
+        }
+        switch result {
+        case .failure(PhrasePlanningError.unauthorized):
+            check(true, "403 maps to unauthorized")
+        case .failure(let error):
+            check(false, "403 mapped incorrectly: \(error)")
+        case .success:
+            check(false, "403 must fail")
+        }
+    }
+
+    do {
+        let transport = MockHTTPTransport()
+        transport.statusCode = 429
+        let client = OpenAICompatibleClient(transport: transport)
+        let result = awaitResult {
+            try await client.fetchPlanText(
+                script: script,
+                budget: budget,
+                wordsPerMinute: 138,
+                configuration: configuration,
+                apiKey: "sk-test"
+            )
+        }
+        switch result {
+        case .failure(PhrasePlanningError.rateLimited):
+            check(true, "429 maps to rateLimited")
+        case .failure(let error):
+            check(false, "429 mapped incorrectly: \(error)")
+        case .success:
+            check(false, "429 must fail")
+        }
+    }
+
+    do {
+        let transport = MockHTTPTransport()
+        transport.error = URLError(.cannotConnectToHost)
+        let client = OpenAICompatibleClient(transport: transport)
+        let result = awaitResult {
+            try await client.fetchPlanText(
+                script: script,
+                budget: budget,
+                wordsPerMinute: 138,
+                configuration: configuration,
+                apiKey: "sk-test"
+            )
+        }
+        switch result {
+        case .failure(PhrasePlanningError.network):
+            check(true, "Network failure maps to network")
+        case .failure(let error):
+            check(false, "Network failure mapped incorrectly: \(error)")
+        case .success:
+            check(false, "Network failure must fail")
+        }
+    }
+
+    do {
+        let transport = MockHTTPTransport()
+        let envelope: [String: Any] = [
+            "choices": [
+                [
+                    "message": ["content": plan],
+                    "finish_reason": "length"
+                ]
+            ]
+        ]
+        transport.responseData = try! JSONSerialization.data(withJSONObject: envelope)
+        let client = OpenAICompatibleClient(transport: transport)
+        let result = awaitResult {
+            try await client.fetchPlanText(
+                script: script,
+                budget: budget,
+                wordsPerMinute: 138,
+                configuration: configuration,
+                apiKey: "sk-test"
+            )
+        }
+        switch result {
+        case .failure(PhrasePlanningError.truncated):
+            check(true, "finish_reason length maps to truncated")
+        case .failure(let error):
+            check(false, "Truncated response mapped incorrectly: \(error)")
+        case .success:
+            check(false, "Truncated response must fail")
+        }
+    }
+
 }
