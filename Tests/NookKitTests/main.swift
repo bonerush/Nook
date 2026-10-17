@@ -160,6 +160,8 @@ runSpeechScriptTests()
 runPhrasePlanTests()
 runPromptComposerTests()
 runLLMConfigurationTests()
+runPhrasePlanningPromptTests()
+runOpenAICompatibleClientTests()
 
 if failures.isEmpty {
     print("PASS — \(testCount) checks")
