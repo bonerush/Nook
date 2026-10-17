@@ -114,6 +114,38 @@ func runPromptComposerTests() {
         check(width <= available + 2, "Split line fits the real text width")
     }
 
+    // Word and character budgets are enforced in the composer even when a
+    // model returns one very long group that still fits the measured width.
+    let shortWords = "one two three four five six seven eight nine ten eleven twelve."
+    let shortScript = ScriptTokenizer.tokenize(shortWords)
+    let shortPlan = PhrasePlan(
+        groups: [PhraseGroup(start: 0, end: 11, pauseAfterMs: nil)],
+        emphasis: [],
+        source: .ai
+    )
+    let smallOptions = PromptBuildOptions(
+        wordsPerMinute: 138,
+        fontSize: 38,
+        cardWidth: 600
+    )
+    let smallBudget = PhraseBudget.derive(
+        fontSize: smallOptions.fontSize,
+        cardWidth: smallOptions.cardWidth
+    )
+    let budgeted = PromptComposer.makeDocument(
+        script: shortScript,
+        plan: shortPlan,
+        options: smallOptions
+    )
+    check(budgeted.lines.count > 1, "Over-budget AI group is split")
+    for line in budgeted.lines {
+        check(line.wordCount <= smallBudget.maxWords, "Line respects word budget")
+        check(
+            line.text.count <= smallBudget.maxCharacters,
+            "Line respects character budget"
+        )
+    }
+
     // Plan pauses, emphasis, and monotonic timing are part of the contract.
     let pauseText = "One two three four five six."
     let pauseScript = ScriptTokenizer.tokenize(pauseText)

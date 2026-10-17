@@ -76,9 +76,10 @@ public final class AIPlanningCoordinator {
         let cacheKey = PhrasePlanCacheKey(
             model: configuration.model,
             promptVersion: PhrasePlanningPrompt.version,
-            scriptHash: PhrasePlanCacheKey.hash(script.sourceText),
+            scriptHash: PhrasePlanCacheKey.hash(
+                script.tokens.map(\.text).joined(separator: "\u{1F}")
+            ),
             tokenizerVersion: script.tokenizerVersion,
-            wordsPerMinute: Int(options.wordsPerMinute.rounded()),
             budgetWords: budget.maxWords,
             budgetCharacters: budget.maxCharacters
         )
@@ -129,7 +130,7 @@ public final class AIPlanningCoordinator {
         budget: PhraseBudget
     ) throws -> PhrasePlan {
         struct Wire: Decodable {
-            let lines: [[Int]]
+            let lines: [[Int?]]
             let emphasis: [Int]?
         }
 
@@ -161,8 +162,9 @@ public final class AIPlanningCoordinator {
             guard line.count == 2 || line.count == 3 else {
                 throw PhrasePlanIssue.emptyPlan
             }
-            let start = line[0]
-            let end = line[1]
+            guard let start = line[0], let end = line[1] else {
+                throw PhrasePlanIssue.emptyPlan
+            }
             let pause = line.count == 3 ? line[2] : nil
             guard start >= 0, end >= start, end < script.tokens.count else {
                 throw PhrasePlanIssue.outOfBounds(max(start, end))

@@ -69,7 +69,7 @@ public enum PhraseLayout {
         return [head] + tailParts
     }
 
-    private static func endsClause(_ text: String) -> Bool {
+    static func endsClause(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(
             in: CharacterSet(charactersIn: "\"'”’)]}")
         )

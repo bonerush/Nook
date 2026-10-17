@@ -11,7 +11,6 @@ func runPhrasePlanCacheTests() {
             promptVersion: 1,
             scriptHash: PhrasePlanCacheKey.hash(source),
             tokenizerVersion: ScriptTokenizer.version,
-            wordsPerMinute: 138,
             budgetWords: 6,
             budgetCharacters: 40
         )
@@ -48,9 +47,6 @@ func runPhrasePlanCacheTests() {
         var hashDifferent = baseKey
         hashDifferent.scriptHash = PhrasePlanCacheKey.hash("A different script.")
         check(hashDifferent != baseKey, "Different scripts produce different cache keys")
-        var wpmDifferent = baseKey
-        wpmDifferent.wordsPerMinute = 150
-        check(wpmDifferent != baseKey, "Different WPM produces different cache keys")
         var tokenizerDifferent = baseKey
         tokenizerDifferent.tokenizerVersion = ScriptTokenizer.version + 1
         check(tokenizerDifferent != baseKey, "Different tokenizer versions produce different cache keys")

@@ -87,7 +87,7 @@ Start 时的流程：
 Nook 不会改写文字，只决定怎么分组和停留多久：
 
 1. 本地 tokenizer 分句、处理缩写和句首 initials、保留 em dash。
-2. AI 只返回 token 索引、行尾停顿和强调索引；validator 修复跨句、gap、越界、重复和预算问题。
+2. AI 只返回 token 索引、行尾停顿和强调索引；validator 修复跨句、gap 和重复，越界仍拒绝；composer 再按真实宽度与词/字符预算切分。
 3. 没有可用 AI plan 时，HeuristicPhrasePlanner 使用本地测量宽度产生呼吸组。
 4. 根据音节数计算词时长，按 WPM 校准；行内逐词推进。
 5. 遇到标点时延长停留，句末和段落末再增加呼吸。每一行只属于一个句子。
@@ -134,7 +134,7 @@ scripts/test.sh                          # 编译并运行检查
 ./scripts/build.sh
 ~~~
 
-当前自动化检查覆盖 tokenizer、PhrasePlan 修复与预算、真实宽度切分、composer 时间轴、配置与 Keychain、prompt、HTTP client、缓存、coordinator 状态机和示例讲稿输出。共 **511 项检查**通过。
+当前自动化检查覆盖 tokenizer、PhrasePlan 修复、真实宽度与预算切分、composer 时间轴、配置与 Keychain、prompt、HTTP client、缓存、coordinator 状态机和示例讲稿输出。共 **521 项检查**通过。
 
 已验证：
 

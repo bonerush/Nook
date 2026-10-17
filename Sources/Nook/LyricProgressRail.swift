@@ -66,7 +66,7 @@ struct LyricProgressRail: View {
                     .frame(width: 44, alignment: .trailing)
             }
             .font(.system(size: 9.5, weight: .medium, design: .monospaced))
-            .foregroundStyle(.white.opacity(0.58))
+            .foregroundStyle(.white.opacity(0.76))
         }
         .frame(height: PromptMetrics.progressAreaHeight)
         .accessibilityElement(children: .ignore)

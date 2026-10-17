@@ -6,7 +6,6 @@ public struct PhrasePlanCacheKey: Hashable, Codable {
     public var promptVersion: Int
     public var scriptHash: String
     public var tokenizerVersion: Int
-    public var wordsPerMinute: Int
     public var budgetWords: Int
     public var budgetCharacters: Int
 
@@ -15,7 +14,6 @@ public struct PhrasePlanCacheKey: Hashable, Codable {
         promptVersion: Int,
         scriptHash: String,
         tokenizerVersion: Int,
-        wordsPerMinute: Int,
         budgetWords: Int,
         budgetCharacters: Int
     ) {
@@ -23,7 +21,6 @@ public struct PhrasePlanCacheKey: Hashable, Codable {
         self.promptVersion = promptVersion
         self.scriptHash = scriptHash
         self.tokenizerVersion = tokenizerVersion
-        self.wordsPerMinute = wordsPerMinute
         self.budgetWords = budgetWords
         self.budgetCharacters = budgetCharacters
     }
@@ -40,7 +37,6 @@ public struct PhrasePlanCacheKey: Hashable, Codable {
             String(promptVersion),
             scriptHash,
             String(tokenizerVersion),
-            String(wordsPerMinute),
             String(budgetWords),
             String(budgetCharacters)
         ].joined(separator: "|")

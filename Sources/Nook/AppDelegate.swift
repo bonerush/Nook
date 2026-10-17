@@ -94,6 +94,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.engine.pause()
             }
         }
+
+        if isPreviewSample,
+           !isDemo,
+           CommandLine.arguments.contains("--preview-compact") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                self?.editorController?.window?.setContentSize(
+                    NSSize(width: 960, height: 680)
+                )
+            }
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -451,14 +461,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func startPrompter() {
+        guard !model.isAISettingsPresented else { return }
+        if case .planning = model.planningState { return }
         guard model.hasContent else {
             NSSound.beep()
             openEditor()
             return
         }
         model.prepareForStart { [weak self] result in
-            guard result == .ready else { return }
-            self?.presentPreparedPanel()
+            guard let self else { return }
+            switch result {
+            case .ready:
+                self.presentPreparedPanel()
+            case .failed:
+                // If Start was invoked from the menu while the editor was
+                // hidden, surface the failure banner instead of looking dead.
+                self.openEditor()
+            }
         }
     }
 

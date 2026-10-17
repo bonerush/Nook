@@ -111,7 +111,7 @@ struct EditorTopBar: View {
                             Text("Start")
                             Text("⌘↩")
                                 .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.white.opacity(0.58))
+                                .foregroundStyle(.white.opacity(0.82))
                         }
                     }
                     .fixedSize()
@@ -119,11 +119,11 @@ struct EditorTopBar: View {
                 }
                 .buttonStyle(LinearPrimaryButtonStyle())
                 .disabled(!model.hasContent && !isPlanning)
-                .keyboardShortcut(.return, modifiers: [.command])
                 .help(isPlanning ? "Cancel AI planning (Esc)" : "Start the teleprompter (⌘↩)")
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.leading, 80)
+        .padding(.trailing, 24)
         .frame(height: 52)
         .background(
             LinearGradient(

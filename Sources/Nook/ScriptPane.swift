@@ -56,6 +56,8 @@ struct ScriptPane: View {
                 .background(Color.clear)
                 .padding(.horizontal, 1)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityLabel("Script")
+                .accessibilityHint("Paste or edit the text you will read aloud.")
 
             if model.script.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
@@ -73,6 +75,16 @@ struct ScriptPane: View {
             }
         }
         .frame(minHeight: 220)
+    }
+
+    private var phraseMapNote: String {
+        if model.planSource == .ai {
+            return "AI planned these line breaks and pauses."
+        }
+        if model.canUseAI {
+            return "AI will refine line breaks and pauses when you start."
+        }
+        return "Local line breaks. Configure AI to refine them at Start."
     }
 
     private var phraseMap: some View {
@@ -131,11 +143,7 @@ struct ScriptPane: View {
                 }
             }
 
-            Text(
-                model.planSource == .ai
-                    ? "AI planned these line breaks and pauses."
-                    : "AI will refine line breaks and pauses when you start."
-            )
+            Text(phraseMapNote)
                 .font(.system(size: 10.5, weight: .regular))
                 .foregroundStyle(NookColor.textTertiary)
         }

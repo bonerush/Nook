@@ -21,8 +21,9 @@ enum NookColor {
     static let borderStrong = Color.nookHex(0x2E3138)
     static let textPrimary = Color.nookHex(0xF2F3F5)
     static let textSecondary = Color.nookHex(0x8C9099)
-    static let textTertiary = Color.nookHex(0x5B5F68)
+    static let textTertiary = Color.nookHex(0x80848E)
     static let accent = Color.nookHex(0x7C86FF)
+    static let accentButton = Color.nookHex(0x5A63E6)
     static let accentSoft = Color.nookHex(0x7C86FF, opacity: 0.14)
     static let success = Color.nookHex(0x69D6A3)
     static let warning = Color.nookHex(0xE7B365)
@@ -189,7 +190,7 @@ struct LinearPrimaryButtonStyle: ButtonStyle {
             .frame(height: 32)
             .background(
                 RoundedRectangle(cornerRadius: NookRadius.control, style: .continuous)
-                    .fill(NookColor.accent)
+                    .fill(NookColor.accentButton)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: NookRadius.control, style: .continuous)

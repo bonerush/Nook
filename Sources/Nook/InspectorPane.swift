@@ -107,6 +107,8 @@ struct InspectorPane: View {
                     step: 1
                 )
                 .tint(NookColor.accent)
+                .accessibilityLabel("Reading speed")
+                .accessibilityValue("\(Int(model.wordsPerMinute.rounded())) words per minute")
 
                 Text("\(Int(model.wordsPerMinute.rounded()))")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
@@ -194,6 +196,8 @@ struct InspectorPane: View {
             }
             Slider(value: binding, in: range, step: step)
                 .tint(NookColor.accent)
+                .accessibilityLabel(title)
+                .accessibilityValue(value)
         }
     }
 
@@ -224,6 +228,7 @@ struct InspectorPane: View {
                 .toggleStyle(.switch)
                 .tint(NookColor.accent)
                 .controlSize(.mini)
+                .accessibilityLabel("Hide from screen sharing")
             }
         }
     }

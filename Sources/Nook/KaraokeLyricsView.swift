@@ -10,7 +10,7 @@ struct KaraokeWordView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var baseColor: Color {
-        activeLine ? .white.opacity(0.32) : .white.opacity(0.88)
+        activeLine ? .white.opacity(0.60) : .white.opacity(0.86)
     }
 
     var body: some View {
@@ -78,7 +78,7 @@ struct KaraokeLyricsView: View {
                 )
                 .animation(
                     reduceMotion
-                        ? .easeOut(duration: 0.16)
+                        ? nil
                         : .spring(response: 0.56, dampingFraction: 0.86),
                     value: engine.currentLineIndex
                 )
@@ -131,9 +131,14 @@ struct KaraokeLyricsView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .opacity(active ? 1 : (distance < 0 ? 0.22 : 0.38))
+        .opacity(active ? 1 : (distance < 0 ? 0.20 : 0.32))
         .blur(radius: active ? 0 : (distance < 0 ? 0.8 : 0.4))
         .scaleEffect(active || reduceMotion ? 1 : 0.985)
+        .shadow(color: .black.opacity(0.35), radius: 2)
+        .animation(
+            reduceMotion ? .easeOut(duration: 0.16) : .easeOut(duration: 0.18),
+            value: active
+        )
     }
 
     private func fillProgress(for word: PromptWord) -> Double {

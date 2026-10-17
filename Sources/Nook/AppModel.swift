@@ -73,10 +73,20 @@ final class AppModel: ObservableObject {
     @Published private(set) var llmConfiguration: LLMConfiguration
     @Published private(set) var hasAPIKey: Bool
     @Published var isAISettingsPresented = false
-    @Published var aiBaseURLDraft: String
-    @Published var aiModelDraft: String
-    @Published var aiPresetDraft: LLMProviderPreset
-    @Published var aiKeyDraft: String = ""
+    @Published var aiBaseURLDraft: String {
+        didSet { invalidateConnectionTest() }
+    }
+    @Published var aiModelDraft: String {
+        didSet { invalidateConnectionTest() }
+    }
+    @Published var aiPresetDraft: LLMProviderPreset {
+        didSet { invalidateConnectionTest() }
+    }
+    @Published var aiKeyDraft: String = "" {
+        didSet { invalidateConnectionTest() }
+    }
+    @Published var isAPIKeyVisible = false
+    @Published private(set) var apiKeySuffix: String? = nil
     @Published private(set) var aiSettingsError: String? = nil
     @Published private(set) var connectionTestState: ConnectionTestState = .idle
 
@@ -85,6 +95,7 @@ final class AppModel: ObservableObject {
     private let coordinator: AIPlanningCoordinator
     private var pendingRebuild: DispatchWorkItem?
     private var planningTask: Task<Void, Never>?
+    private var planningGeneration = 0
 
     init(
         defaults: UserDefaults = .standard,
@@ -119,6 +130,9 @@ final class AppModel: ObservableObject {
         self.aiPresetDraft = configuration.preset
         let storedKey = (try? secretStore.read()) ?? nil
         self.hasAPIKey = storedKey?.isEmpty == false
+        if let storedKey, storedKey.count >= 4 {
+            self.apiKeySuffix = String(storedKey.suffix(4))
+        }
 
         let base = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask).first
@@ -252,6 +266,8 @@ final class AppModel: ObservableObject {
             return
         }
 
+        planningGeneration += 1
+        let generation = planningGeneration
         planningTask?.cancel()
         planningState = .planning
         planError = nil
@@ -271,6 +287,7 @@ final class AppModel: ObservableObject {
             )
             if Task.isCancelled { return }
             DispatchQueue.main.async {
+                guard self.planningGeneration == generation else { return }
                 guard self.script == snapshotText else {
                     self.planningState = .idle
                     self.planningTask = nil
@@ -303,6 +320,7 @@ final class AppModel: ObservableObject {
     }
 
     func startWithLocalPlan() {
+        planningGeneration += 1
         planningTask?.cancel()
         planningTask = nil
         activePlan = nil
@@ -313,6 +331,7 @@ final class AppModel: ObservableObject {
     }
 
     func cancelPlanning() {
+        planningGeneration += 1
         planningTask?.cancel()
         planningTask = nil
         planningState = .idle
@@ -331,6 +350,7 @@ final class AppModel: ObservableObject {
     }
 
     private func invalidateAIPlan() {
+        planningGeneration += 1
         planningTask?.cancel()
         planningTask = nil
         activePlan = nil
@@ -348,6 +368,7 @@ final class AppModel: ObservableObject {
         aiKeyDraft = ""
         aiSettingsError = nil
         connectionTestState = .idle
+        isAPIKeyVisible = false
         isAISettingsPresented = true
     }
 
@@ -356,6 +377,7 @@ final class AppModel: ObservableObject {
         aiKeyDraft = ""
         aiSettingsError = nil
         connectionTestState = .idle
+        isAPIKeyVisible = false
     }
 
     func saveAISettings() {
@@ -372,6 +394,7 @@ final class AppModel: ObservableObject {
             aiSettingsError = "This Base URL is not allowed. Remove credentials and query parameters."
             return
         }
+        llmConfiguration = configuration
         let trimmedKey = aiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedKey.isEmpty {
             do {
@@ -381,23 +404,66 @@ final class AppModel: ObservableObject {
                 return
             }
         }
-        llmConfiguration = configuration
-        hasAPIKey = ((try? keychain.read()) ?? nil)?.isEmpty == false
         aiKeyDraft = ""
+        let currentKey: String?
+        do {
+            currentKey = try keychain.read()
+        } catch {
+            aiSettingsError = "Could not read the API key from Keychain."
+            return
+        }
+        hasAPIKey = currentKey?.isEmpty == false
+        apiKeySuffix = keySuffix(currentKey)
         aiSettingsError = nil
         connectionTestState = .idle
-        isAISettingsPresented = false
+        isAPIKeyVisible = false
         invalidateAIPlan()
         rebuildDocumentNow()
+
+        if !hasAPIKey, !llmConfiguration.isLocalEndpoint {
+            aiSettingsError = "Endpoint saved. Add an API key to enable AI."
+            return
+        }
+        isAISettingsPresented = false
     }
 
     func clearAPIKey() {
-        try? keychain.delete()
+        do {
+            try keychain.delete()
+            let remaining = try keychain.read()
+            if let remaining, !remaining.isEmpty {
+                hasAPIKey = true
+                apiKeySuffix = keySuffix(remaining)
+                aiSettingsError = "Could not remove the key from Keychain."
+                return
+            }
+        } catch {
+            aiSettingsError = "Could not remove the key from Keychain."
+            return
+        }
         hasAPIKey = false
+        apiKeySuffix = nil
+        isAPIKeyVisible = false
         aiKeyDraft = ""
+        connectionTestState = .idle
+        aiSettingsError = nil
         if !llmConfiguration.isLocalEndpoint {
             invalidateAIPlan()
             rebuildDocumentNow()
+        }
+    }
+
+    private func keySuffix(_ key: String?) -> String? {
+        guard let key, !key.isEmpty else { return nil }
+        return key.count >= 4 ? String(key.suffix(4)) : "••••"
+    }
+
+    private func invalidateConnectionTest() {
+        if connectionTestState != .idle {
+            connectionTestState = .idle
+        }
+        if aiSettingsError != nil {
+            aiSettingsError = nil
         }
     }
 

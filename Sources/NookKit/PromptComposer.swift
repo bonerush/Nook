@@ -26,20 +26,35 @@ public enum PromptComposer {
         }
         var laidOutGroups: [PhraseGroup] = []
         for group in normalized.groups {
-            let pieces = PhraseLayout.split(
-                tokens: script.tokens,
-                range: group.start...group.end,
-                fontSize: options.fontSize,
-                maxWidth: options.availableWidth
-            )
-            for (index, piece) in pieces.enumerated() {
-                laidOutGroups.append(
-                    PhraseGroup(
-                        start: piece.lowerBound,
-                        end: piece.upperBound,
-                        pauseAfterMs: index == pieces.count - 1 ? group.pauseAfterMs : nil
-                    )
+            let budgetPieces: [ClosedRange<Int>]
+            if normalized.source == .ai {
+                budgetPieces = budgetSplit(
+                    group,
+                    script: script,
+                    budget: budget
                 )
+            } else {
+                budgetPieces = [group.start...group.end]
+            }
+
+            for (budgetIndex, budgetRange) in budgetPieces.enumerated() {
+                let widthPieces = PhraseLayout.split(
+                    tokens: script.tokens,
+                    range: budgetRange,
+                    fontSize: options.fontSize,
+                    maxWidth: options.availableWidth
+                )
+                for (widthIndex, piece) in widthPieces.enumerated() {
+                    let isOriginalEnd = budgetIndex == budgetPieces.count - 1
+                        && widthIndex == widthPieces.count - 1
+                    laidOutGroups.append(
+                        PhraseGroup(
+                            start: piece.lowerBound,
+                            end: piece.upperBound,
+                            pauseAfterMs: isOriginalEnd ? group.pauseAfterMs : nil
+                        )
+                    )
+                }
             }
         }
         let laidOut = PhrasePlan(
@@ -53,6 +68,49 @@ public enum PromptComposer {
             base: base,
             options: options
         )
+    }
+
+    private static func budgetSplit(
+        _ group: PhraseGroup,
+        script: SpeechScript,
+        budget: PhraseBudget
+    ) -> [ClosedRange<Int>] {
+        var pieces: [ClosedRange<Int>] = []
+        var currentStart = group.start
+
+        while currentStart <= group.end {
+            var currentEnd = currentStart
+            var words = 0
+            var characters = 0
+
+            while currentEnd <= group.end {
+                let text = script.tokens[currentEnd].text
+                let addition = text.count + (words == 0 ? 0 : 1)
+                if words > 0,
+                   words + 1 > budget.maxWords || characters + addition > budget.maxCharacters {
+                    break
+                }
+                words += 1
+                characters += addition
+                currentEnd += 1
+            }
+
+            if currentEnd == currentStart {
+                currentEnd = currentStart + 1
+            }
+            var selectedEnd = min(group.end, currentEnd - 1)
+            if selectedEnd > currentStart {
+                for candidate in stride(from: selectedEnd, through: currentStart + 1, by: -1) {
+                    if PhraseLayout.endsClause(script.tokens[candidate].text) {
+                        selectedEnd = candidate
+                        break
+                    }
+                }
+            }
+            pieces.append(currentStart...selectedEnd)
+            currentStart = selectedEnd + 1
+        }
+        return pieces
     }
 
     private static func composeDocument(

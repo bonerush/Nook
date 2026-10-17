@@ -193,4 +193,35 @@ func runAIPlanningCoordinatorTests() {
         )
     }
     checkEqual(unauthorized, .failed(.unauthorized), "401 maps to unauthorized")
+
+    // null is a natural optional pause; it must not invalidate a plan.
+    do {
+        let nullFetcher = MockPhraseFetcher()
+        nullFetcher.raw = "{\"lines\":[[0,2,120],[3,8,null],[9,13,0]],\"emphasis\":[]}"
+        var nullConfig = coordinatorConfig
+        nullConfig.model = "null-model"
+        let nullService = coordinator(
+            directory: directory.appendingPathComponent("null"),
+            fetcher: nullFetcher
+        )
+        let result = awaitCoordinatorResult {
+            await nullService.prepare(
+                script: coordinatorScript,
+                options: coordinatorOptions,
+                configuration: nullConfig,
+                apiKey: "test-api-key"
+            )
+        }
+        switch result {
+        case .fresh(let plan):
+            checkEqual(plan.groups.count, 3, "Null pause is accepted")
+        case .cached:
+            check(false, "Null pause fixture unexpectedly cached")
+        case .failed(let failure):
+            check(false, "Null pause fixture failed: \(failure)")
+        case .disabled:
+            check(false, "Null pause fixture was disabled")
+        }
+    }
+
 }

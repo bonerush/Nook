@@ -1,8 +1,10 @@
 import AppKit
+import Combine
 import SwiftUI
 
 final class EditorWindowController: NSWindowController, NSWindowDelegate {
     private let model: AppModel
+    private var cancellables = Set<AnyCancellable>()
 
     init(model: AppModel, actions: EditorActions) {
         self.model = model
@@ -30,15 +32,18 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         window.setContentSize(NSSize(width: 1040, height: 720))
         window.center()
 
-        // The Linear shell owns its own chrome and starts at the very top of
-        // the window. Hide the native traffic lights so they cannot collide
-        // with the wordmark; Close and Minimize remain available in the menus.
-        window.standardWindowButton(.closeButton)?.isHidden = true
-        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
-        window.standardWindowButton(.zoomButton)?.isHidden = true
-
         super.init(window: window)
         window.delegate = self
+
+        model.$isAISettingsPresented
+            .dropFirst()
+            .sink { [weak self] presented in
+                guard !presented else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
+                    self?.focusScriptEditor()
+                }
+            }
+            .store(in: &cancellables)
     }
 
     @available(*, unavailable)
@@ -59,12 +64,17 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
 
         // The SwiftUI TextEditor is backed by an NSTextView. Focus it after the
         // first layout pass so the writer can start typing immediately.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak window] in
-            guard let window, let textView = window.contentView?.nookFirstEditableTextView else {
-                return
-            }
-            window.makeFirstResponder(textView)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
+            self?.focusScriptEditor()
         }
+    }
+
+    private func focusScriptEditor() {
+        guard let window,
+              let textView = window.contentView?.nookFirstEditableTextView else {
+            return
+        }
+        window.makeFirstResponder(textView)
     }
 }
 

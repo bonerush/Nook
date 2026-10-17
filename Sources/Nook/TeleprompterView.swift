@@ -21,6 +21,17 @@ struct TeleprompterView: View {
             ZStack {
                 if reduceTransparency {
                     Color.black.opacity(0.90)
+                } else {
+                    LinearGradient(
+                        colors: [
+                            .black.opacity(0.16),
+                            .black.opacity(0.30),
+                            .black.opacity(0.18)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .allowsHitTesting(false)
                 }
 
                 VStack(spacing: PromptMetrics.contentToProgressGap) {

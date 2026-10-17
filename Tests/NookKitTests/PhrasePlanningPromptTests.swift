@@ -15,7 +15,12 @@ func runPhrasePlanningPromptTests() {
     check(prompt.contains("40 characters"), "Prompt carries the character budget")
     check(prompt.contains("14 tokens"), "Prompt states the token count")
     check(prompt.contains("untrusted data"), "Prompt treats the script as data")
-    checkEqual(PhrasePlanningPrompt.version, 2, "Prompt version is bumped with the contract")
+    check(prompt.contains("SENTENCE GROUPS"), "Prompt groups tokens by sentence")
+    check(
+        PhrasePlanningPrompt.systemText.contains("Never rewrite"),
+        "System prompt carries the immutable no-rewrite rule"
+    )
+    checkEqual(PhrasePlanningPrompt.version, 4, "Prompt version is bumped with the contract")
 }
 
 private final class MockHTTPTransport: HTTPTransport {

@@ -43,6 +43,8 @@ struct EditorView: View {
                 LinearHairline()
                 EditorStatusBar(model: model)
             }
+            .disabled(model.isAISettingsPresented)
+            .allowsHitTesting(!model.isAISettingsPresented)
 
             if model.isAISettingsPresented {
                 AISettingsOverlay(model: model) {
@@ -54,10 +56,10 @@ struct EditorView: View {
         .frame(minWidth: 960, minHeight: 680)
         .preferredColorScheme(.dark)
         .onExitCommand {
-            if model.planningState == .planning {
-                model.cancelPlanning()
-            } else if model.isAISettingsPresented {
+            if model.isAISettingsPresented {
                 model.closeAISettings()
+            } else if model.planningState == .planning {
+                model.cancelPlanning()
             }
         }
     }
