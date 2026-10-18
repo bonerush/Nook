@@ -48,6 +48,24 @@ func runLLMConfigurationTests() {
     let encoded = String(data: try! JSONEncoder().encode(config), encoding: .utf8) ?? ""
     check(!encoded.lowercased().contains("apikey"), "Configuration never contains a key field")
 
+    let deepSeek = LLMConfiguration(
+        preset: .deepSeek,
+        baseURLString: "https://api.deepseek.com",
+        model: "deepseek-flash"
+    )
+    check(deepSeek.supportsReasoning, "DeepSeek Flash exposes thinking mode")
+    checkEqual(deepSeek.reasoningEnabled, true, "Thinking is on by default")
+    checkEqual(deepSeek.reasoningEffort, .high, "Thinking effort defaults to high")
+    let legacyJSON = """
+    {"preset":"custom","baseURLString":"https://example.com/v1","model":"legacy"}
+    """
+    let legacy = try! JSONDecoder().decode(
+        LLMConfiguration.self,
+        from: Data(legacyJSON.utf8)
+    )
+    checkEqual(legacy.reasoningEnabled, true, "Legacy config enables thinking by default")
+    checkEqual(legacy.reasoningEffort, .high, "Legacy config defaults to high effort")
+
     let unsafe = LLMConfiguration(
         preset: .custom,
         baseURLString: "https://user:secret@example.com/v1?token=leak",

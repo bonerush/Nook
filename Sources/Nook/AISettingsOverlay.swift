@@ -14,6 +14,7 @@ struct AISettingsOverlay: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 providerPresets
+                reasoningSection
 
                 settingsField(
                     title: "Base URL",
@@ -115,6 +116,74 @@ struct AISettingsOverlay: View {
                 }
             }
         }
+    }
+
+    private var supportsReasoningDraft: Bool {
+        if model.aiPresetDraft == .deepSeek { return true }
+        guard let host = URL(string: model.aiBaseURLDraft)?.host?.lowercased() else {
+            return false
+        }
+        return host.contains("deepseek.com")
+    }
+
+    @ViewBuilder
+    private var reasoningSection: some View {
+        if supportsReasoningDraft {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .center, spacing: 8) {
+                    LinearSectionLabel(title: "Reasoning", accessory: "THINKING MODE")
+                    Spacer(minLength: 8)
+                    Toggle("", isOn: $model.aiReasoningEnabledDraft)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(NookColor.accent)
+                        .controlSize(.mini)
+                        .accessibilityLabel("Thinking mode")
+                }
+
+                if model.aiReasoningEnabledDraft {
+                    HStack(spacing: 6) {
+                        ForEach(LLMReasoningEffort.allCases, id: \.self) { effort in
+                            reasoningEffortButton(effort)
+                        }
+                    }
+                    Text("The model thinks first; the final answer is still strict JSON.")
+                        .font(.system(size: 10.5, weight: .regular))
+                        .foregroundStyle(NookColor.textTertiary)
+                } else {
+                    Text("Thinking is disabled. The final answer is still strict JSON.")
+                        .font(.system(size: 10.5, weight: .regular))
+                        .foregroundStyle(NookColor.textTertiary)
+                }
+            }
+        }
+    }
+
+    private func reasoningEffortButton(_ effort: LLMReasoningEffort) -> some View {
+        let selected = model.aiReasoningEffortDraft == effort
+        return Button {
+            model.aiReasoningEffortDraft = effort
+        } label: {
+            Text(effort.displayName)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(selected ? NookColor.textPrimary : NookColor.textSecondary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 26)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(selected ? NookColor.accentSoft : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(
+                            selected ? NookColor.accent.opacity(0.48) : NookColor.border,
+                            lineWidth: 0.8
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(!model.aiReasoningEnabledDraft)
+        .accessibilityValue(selected ? "Selected" : "Not selected")
     }
 
     private func presetButton(_ preset: LLMProviderPreset) -> some View {

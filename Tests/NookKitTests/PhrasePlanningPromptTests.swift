@@ -21,7 +21,7 @@ func runPhrasePlanningPromptTests() {
         PhrasePlanningPrompt.systemText.contains("Never rewrite"),
         "System prompt carries the immutable no-rewrite rule"
     )
-    checkEqual(PhrasePlanningPrompt.version, 5, "Prompt version is bumped with the contract")
+    checkEqual(PhrasePlanningPrompt.version, 6, "Prompt version is bumped with the contract")
 }
 
 private final class MockHTTPTransport: HTTPTransport {
@@ -160,6 +160,47 @@ func runOpenAICompatibleClientTests() {
             check(false, "Timeout mapped incorrectly: \(error)")
         case .success:
             check(false, "Timeout must fail")
+        }
+    }
+
+    // DeepSeek Flash supports thinking; keep it on and budget space for
+    // reasoning tokens before the final JSON.
+    do {
+        let transport = MockHTTPTransport()
+        let envelope: [String: Any] = [
+            "choices": [["message": ["content": plan]]]
+        ]
+        transport.responseData = try! JSONSerialization.data(withJSONObject: envelope)
+        let reasoningConfiguration = LLMConfiguration(
+            preset: .deepSeek,
+            baseURLString: "https://api.deepseek.com",
+            model: "deepseek-flash"
+        )
+        let client = OpenAICompatibleClient(transport: transport)
+        let result = awaitResult {
+            try await client.fetchPlanText(
+                script: script,
+                budget: budget,
+                wordsPerMinute: 138,
+                configuration: reasoningConfiguration,
+                apiKey: "test-api-key"
+            )
+        }
+        switch result {
+        case .success:
+            let request = transport.capturedRequest!
+            let body = try! JSONSerialization.jsonObject(
+                with: request.httpBody!
+            ) as! [String: Any]
+            let thinking = body["thinking"] as? [String: Any]
+            checkEqual(thinking?["type"] as? String, "enabled", "Thinking mode is enabled")
+            checkEqual(body["reasoning_effort"] as? String, "high", "Reasoning effort is sent")
+            let responseFormat = body["response_format"] as? [String: Any]
+            checkEqual(responseFormat?["type"] as? String, "json_object", "JSON mode is requested")
+            checkEqual(body["max_tokens"] as? Int, 8_192, "Reasoning request leaves room for thinking")
+            checkEqual(request.timeoutInterval, 180, "Reasoning request has a longer timeout")
+        case .failure(let error):
+            check(false, "Reasoning client path failed: \(error)")
         }
     }
 

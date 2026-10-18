@@ -6,6 +6,8 @@ public struct PhrasePlanCacheKey: Hashable, Codable {
     public var promptVersion: Int
     public var scriptHash: String
     public var tokenizerVersion: Int
+    public var reasoningEnabled: Bool
+    public var reasoningEffort: String
     public var budgetWords: Int
     public var budgetCharacters: Int
 
@@ -14,6 +16,8 @@ public struct PhrasePlanCacheKey: Hashable, Codable {
         promptVersion: Int,
         scriptHash: String,
         tokenizerVersion: Int,
+        reasoningEnabled: Bool = false,
+        reasoningEffort: String = "high",
         budgetWords: Int,
         budgetCharacters: Int
     ) {
@@ -21,6 +25,8 @@ public struct PhrasePlanCacheKey: Hashable, Codable {
         self.promptVersion = promptVersion
         self.scriptHash = scriptHash
         self.tokenizerVersion = tokenizerVersion
+        self.reasoningEnabled = reasoningEnabled
+        self.reasoningEffort = reasoningEffort
         self.budgetWords = budgetWords
         self.budgetCharacters = budgetCharacters
     }
@@ -37,6 +43,8 @@ public struct PhrasePlanCacheKey: Hashable, Codable {
             String(promptVersion),
             scriptHash,
             String(tokenizerVersion),
+            String(reasoningEnabled),
+            reasoningEffort,
             String(budgetWords),
             String(budgetCharacters)
         ].joined(separator: "|")

@@ -17,6 +17,7 @@ Nook 是一个为英文自我介绍、面试和短演讲准备的小型 macOS �
 - **只在 Start 时联网**：输入、拖动滑杆和编辑讲稿都不会触发网络请求。配置不完整、请求失败或取消时，编辑器会明确显示状态，不会悄悄使用降级结果。
 - **Linear 风格编辑器**：近黑画布、1 px 分隔线、克制的 periwinkle 强调色、296 pt 检查器、文档优先的排版。
 - **官方 Liquid Glass 提词面板**：macOS 26+ 使用系统 glassEffect；旧系统使用 NSVisualEffectView fallback。
+- **可控制的 reasoning 模式**：DeepSeek Flash 默认开启 thinking，可选择 Low / High / Max effort；请求会发送 thinking 开关、effort 和 JSON mode，并为 reasoning tokens 预留输出预算。
 - **Apple Music 式歌词动效**：三行歌词栈、逐词填光、行切换弹簧、上一行 / 下一行淡出与模糊，以及极细进度轨。
 - **本地回退**：没有 API key 或 AI 失败时，可以用本地断句立即开始；面板来源显示 LOCAL 或 AI。
 - **Keychain 保存密钥**：API key 只进 macOS Keychain，不写入 UserDefaults、日志、缓存、错误信息或仓库。
@@ -54,7 +55,7 @@ Start 时的流程：
 - 没有配置或没有 key：直接使用本地断句，面板显示 LOCAL。
 - 配置完整：先进入 AI planning；成功后显示 AI plan，失败时编辑器保留并显示错误横幅。
 - **Retry AI** 重新请求；**Start locally** 立即用本地断句开始；**Settings** 回到设置。
-- 请求成功后按 script hash + model + prompt version + tokenizer version + budget 缓存；再次 Start 会优先命中缓存。
+- 请求成功后按 script hash + model + prompt version + tokenizer version + reasoning effort + budget 缓存；再次 Start 会优先命中缓存。
 
 ## 使用
 
@@ -134,7 +135,7 @@ scripts/test.sh                          # 编译并运行检查
 ./scripts/build.sh
 ~~~
 
-当前自动化检查覆盖 tokenizer、PhrasePlan 修复、真实宽度与预算切分、composer 时间轴、配置与 Keychain、prompt、HTTP client、缓存、coordinator 状态机和示例讲稿输出。共 **522 项检查**通过。
+当前自动化检查覆盖 tokenizer、PhrasePlan 修复、真实宽度与预算切分、composer 时间轴、配置与 Keychain、prompt、HTTP client、缓存、coordinator 状态机和示例讲稿输出。共 **532 项检查**通过。
 
 已验证：
 

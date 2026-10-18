@@ -25,19 +25,62 @@ public enum LLMProviderPreset: String, Codable, CaseIterable, Equatable, Hashabl
     }
 }
 
+public enum LLMReasoningEffort: String, Codable, CaseIterable, Equatable, Hashable {
+    case low
+    case high
+    case max
+
+    public var displayName: String {
+        switch self {
+        case .low: return "Low"
+        case .high: return "High"
+        case .max: return "Max"
+        }
+    }
+}
+
 public struct LLMConfiguration: Codable, Equatable {
     public var preset: LLMProviderPreset
     public var baseURLString: String
     public var model: String
+    public var reasoningEnabled: Bool
+    public var reasoningEffort: LLMReasoningEffort
 
     public init(
         preset: LLMProviderPreset,
         baseURLString: String,
-        model: String
+        model: String,
+        reasoningEnabled: Bool = true,
+        reasoningEffort: LLMReasoningEffort = .high
     ) {
         self.preset = preset
         self.baseURLString = baseURLString.trimmingCharacters(in: .whitespacesAndNewlines)
         self.model = model.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.reasoningEnabled = reasoningEnabled
+        self.reasoningEffort = reasoningEffort
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case preset
+        case baseURLString
+        case model
+        case reasoningEnabled
+        case reasoningEffort
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.preset = try container.decode(LLMProviderPreset.self, forKey: .preset)
+        self.baseURLString = try container.decode(String.self, forKey: .baseURLString)
+        self.model = try container.decode(String.self, forKey: .model)
+        self.reasoningEnabled = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .reasoningEnabled
+        ) ?? true
+        self.reasoningEffort = try container.decodeIfPresent(
+            LLMReasoningEffort.self,
+            forKey: .reasoningEffort
+        ) ?? .high
     }
 
     private var parsedComponents: URLComponents? {
@@ -82,6 +125,11 @@ public struct LLMConfiguration: Codable, Equatable {
     public var isLocalEndpoint: Bool {
         guard let host = parsedComponents?.host?.lowercased() else { return false }
         return host == "localhost" || host == "127.0.0.1" || host == "::1"
+    }
+
+    public var supportsReasoning: Bool {
+        if preset == .deepSeek { return true }
+        return parsedComponents?.host?.lowercased().contains("deepseek.com") == true
     }
 
     public var isComplete: Bool {

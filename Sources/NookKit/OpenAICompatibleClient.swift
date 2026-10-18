@@ -40,11 +40,19 @@ public final class OpenAICompatibleClient {
             budget: budget,
             wordsPerMinute: wordsPerMinute
         )
-        // Long scripts and OpenAI-compatible reasoning models can spend
-        // completion tokens before emitting the JSON plan. Keep a generous
-        // ceiling; unused completion budget is not charged.
-        let outputBudget = max(2_048, min(8_192, script.tokens.count * 12))
-        let body: [String: Any] = [
+        let reasoningActive = configuration.supportsReasoning
+            && configuration.reasoningEnabled
+        // Reasoning tokens are part of the completion budget: DeepSeek Flash
+        // can emit thousands of reasoning tokens before the JSON. The model's
+        // maximum output is 384K, so leave ample room and only charge what is generated.
+        let outputBudget: Int
+        if reasoningActive {
+            outputBudget = max(8_192, min(65_536, script.tokens.count * 64))
+        } else {
+            outputBudget = max(2_048, min(8_192, script.tokens.count * 12))
+        }
+
+        var body: [String: Any] = [
             "model": configuration.model,
             "messages": [
                 [
@@ -57,6 +65,15 @@ public final class OpenAICompatibleClient {
             "max_tokens": outputBudget,
             "stream": false
         ]
+        if configuration.supportsReasoning {
+            body["thinking"] = [
+                "type": reasoningActive ? "enabled" : "disabled"
+            ]
+            if reasoningActive {
+                body["reasoning_effort"] = configuration.reasoningEffort.rawValue
+                body["response_format"] = ["type": "json_object"]
+            }
+        }
         let bodyData: Data
         do {
             bodyData = try JSONSerialization.data(withJSONObject: body)
@@ -66,10 +83,9 @@ public final class OpenAICompatibleClient {
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
-        // A non-streaming plan for a long script can spend well over the old
-        // 12 s idle window generating its JSON. The URLSession request timeout
-        // is an idle timer, so give the provider enough room to finish.
-        request.timeoutInterval = 60
+        // Reasoning is slower than a plain completion; stream=false means the
+        // first response byte arrives after all reasoning and JSON are done.
+        request.timeoutInterval = reasoningActive ? 180 : 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if !key.isEmpty {
             request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
@@ -128,6 +144,12 @@ public final class OpenAICompatibleClient {
             struct Choice: Decodable {
                 struct Message: Decodable {
                     let content: String
+                    let reasoningContent: String?
+
+                    enum CodingKeys: String, CodingKey {
+                        case content
+                        case reasoningContent = "reasoning_content"
+                    }
                 }
                 let message: Message
                 let finishReason: String?
@@ -153,6 +175,7 @@ public final class OpenAICompatibleClient {
                     outputBudget: outputBudget,
                     promptTokens: envelope.usage?.promptTokens,
                     completionTokens: envelope.usage?.completionTokens,
+                    reasoningCharacters: choice.message.reasoningContent?.count ?? 0,
                     contentCharacters: choice.message.content.count
                 )
                 throw PhrasePlanningError.truncated
@@ -193,6 +216,7 @@ public final class OpenAICompatibleClient {
         outputBudget: Int,
         promptTokens: Int?,
         completionTokens: Int?,
+        reasoningCharacters: Int,
         contentCharacters: Int
     ) {
         let directory = FileManager.default
@@ -204,7 +228,7 @@ public final class OpenAICompatibleClient {
             withIntermediateDirectories: true
         )
         let stamp = ISO8601DateFormatter().string(from: Date())
-        let line = "time=\(stamp) host=\(endpoint.host ?? "?") model=\(configuration.model) requested=\(outputBudget) prompt=\(promptTokens ?? -1) completion=\(completionTokens ?? -1) contentChars=\(contentCharacters)\n"
+        let line = "time=\(stamp) host=\(endpoint.host ?? "?") model=\(configuration.model) reasoning=\(configuration.reasoningEnabled)/\(configuration.reasoningEffort.rawValue) requested=\(outputBudget) prompt=\(promptTokens ?? -1) completion=\(completionTokens ?? -1) reasoningChars=\(reasoningCharacters) contentChars=\(contentCharacters)\n"
         writeDiagnostic(line.trimmingCharacters(in: .newlines))
     }
 

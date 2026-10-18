@@ -82,6 +82,12 @@ final class AppModel: ObservableObject {
     @Published var aiPresetDraft: LLMProviderPreset {
         didSet { invalidateConnectionTest() }
     }
+    @Published var aiReasoningEnabledDraft: Bool {
+        didSet { invalidateConnectionTest() }
+    }
+    @Published var aiReasoningEffortDraft: LLMReasoningEffort {
+        didSet { invalidateConnectionTest() }
+    }
     @Published var aiKeyDraft: String = "" {
         didSet { invalidateConnectionTest() }
     }
@@ -128,6 +134,8 @@ final class AppModel: ObservableObject {
         self.aiBaseURLDraft = configuration.baseURLString
         self.aiModelDraft = configuration.model
         self.aiPresetDraft = configuration.preset
+        self.aiReasoningEnabledDraft = configuration.reasoningEnabled
+        self.aiReasoningEffortDraft = configuration.reasoningEffort
         let storedKey = (try? secretStore.read()) ?? nil
         self.hasAPIKey = storedKey?.isEmpty == false
         if let storedKey, storedKey.count >= 4 {
@@ -365,6 +373,8 @@ final class AppModel: ObservableObject {
         aiBaseURLDraft = llmConfiguration.baseURLString
         aiModelDraft = llmConfiguration.model
         aiPresetDraft = llmConfiguration.preset
+        aiReasoningEnabledDraft = llmConfiguration.reasoningEnabled
+        aiReasoningEffortDraft = llmConfiguration.reasoningEffort
         aiKeyDraft = ""
         aiSettingsError = nil
         connectionTestState = .idle
@@ -384,7 +394,9 @@ final class AppModel: ObservableObject {
         let configuration = LLMConfiguration(
             preset: aiPresetDraft,
             baseURLString: aiBaseURLDraft,
-            model: aiModelDraft
+            model: aiModelDraft,
+            reasoningEnabled: aiReasoningEnabledDraft,
+            reasoningEffort: aiReasoningEffortDraft
         )
         guard configuration.isComplete else {
             aiSettingsError = "Enter a valid HTTPS Base URL and model."
@@ -471,7 +483,9 @@ final class AppModel: ObservableObject {
         let configuration = LLMConfiguration(
             preset: aiPresetDraft,
             baseURLString: aiBaseURLDraft,
-            model: aiModelDraft
+            model: aiModelDraft,
+            reasoningEnabled: aiReasoningEnabledDraft,
+            reasoningEffort: aiReasoningEffortDraft
         )
         let draft = aiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         let stored = ((try? keychain.read()) ?? nil) ?? ""

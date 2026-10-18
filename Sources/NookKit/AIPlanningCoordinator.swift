@@ -80,6 +80,9 @@ public final class AIPlanningCoordinator {
                 script.tokens.map(\.text).joined(separator: "\u{1F}")
             ),
             tokenizerVersion: script.tokenizerVersion,
+            reasoningEnabled: configuration.supportsReasoning
+                && configuration.reasoningEnabled,
+            reasoningEffort: configuration.reasoningEffort.rawValue,
             budgetWords: budget.maxWords,
             budgetCharacters: budget.maxCharacters
         )
