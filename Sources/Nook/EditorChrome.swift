@@ -39,7 +39,7 @@ struct AIStatusView: View {
             }
             Text(status.label)
                 .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(status.color)
+                .foregroundStyle(NookColor.textSecondary)
         }
         .padding(.horizontal, 7)
         .padding(.vertical, 4)
