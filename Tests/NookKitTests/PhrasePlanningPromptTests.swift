@@ -112,7 +112,7 @@ func runOpenAICompatibleClientTests() {
                 "https://example.com/v1/chat/completions",
                 "Client uses the configured endpoint"
             )
-            checkEqual(request.timeoutInterval, 12, "Client uses a 12s timeout")
+            checkEqual(request.timeoutInterval, 60, "Client uses a 60s timeout")
         case .failure(let error):
             check(false, "Client success path failed: \(error)")
         }

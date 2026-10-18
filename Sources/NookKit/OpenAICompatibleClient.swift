@@ -66,7 +66,10 @@ public final class OpenAICompatibleClient {
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
-        request.timeoutInterval = 12
+        // A non-streaming plan for a long script can spend well over the old
+        // 12 s idle window generating its JSON. The URLSession request timeout
+        // is an idle timer, so give the provider enough room to finish.
+        request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if !key.isEmpty {
             request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
@@ -78,10 +81,22 @@ public final class OpenAICompatibleClient {
         do {
             (data, response) = try await transport.send(request)
         } catch let error as URLError where error.code == .timedOut {
+            recordTransportFailure(
+                endpoint: endpoint,
+                configuration: configuration,
+                outputBudget: outputBudget,
+                error: error
+            )
             throw PhrasePlanningError.timeout
         } catch is CancellationError {
             throw PhrasePlanningError.cancelled
         } catch let error as URLError {
+            recordTransportFailure(
+                endpoint: endpoint,
+                configuration: configuration,
+                outputBudget: outputBudget,
+                error: error
+            )
             if error.code == .cancelled { throw PhrasePlanningError.cancelled }
             throw PhrasePlanningError.network
         } catch {
@@ -154,6 +169,22 @@ public final class OpenAICompatibleClient {
         }
     }
 
+    /// Metadata-only diagnostic for a transport failure. It never records the
+    /// script, request headers, response body, or API key.
+    private func recordTransportFailure(
+        endpoint: URL,
+        configuration: LLMConfiguration,
+        outputBudget: Int,
+        error: URLError
+    ) {
+        writeDiagnostic(
+            "transport-error time=\(ISO8601DateFormatter().string(from: Date())) " +
+            "host=\(endpoint.host ?? "?") model=\(configuration.model) " +
+            "requested=\(outputBudget) code=\(error.code.rawValue) " +
+            "description=\(error.localizedDescription)"
+        )
+    }
+
     /// Metadata-only diagnostic. It never records the script, response body,
     /// or API key; it exists so a truncated provider response can be debugged.
     private func recordTruncation(
@@ -174,17 +205,28 @@ public final class OpenAICompatibleClient {
         )
         let stamp = ISO8601DateFormatter().string(from: Date())
         let line = "time=\(stamp) host=\(endpoint.host ?? "?") model=\(configuration.model) requested=\(outputBudget) prompt=\(promptTokens ?? -1) completion=\(completionTokens ?? -1) contentChars=\(contentCharacters)\n"
+        writeDiagnostic(line.trimmingCharacters(in: .newlines))
+    }
+
+    private func writeDiagnostic(_ line: String) {
+        let directory = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Nook", isDirectory: true)
+        guard let directory else { return }
+        try? FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
         let url = directory.appendingPathComponent("ai-debug.log")
-        if let data = line.data(using: .utf8) {
-            if FileManager.default.fileExists(atPath: url.path) {
-                if let handle = try? FileHandle(forWritingTo: url) {
-                    _ = try? handle.seekToEnd()
-                    try? handle.write(contentsOf: data)
-                    try? handle.close()
-                }
-            } else {
-                try? data.write(to: url, options: [.atomic])
+        guard let data = (line + "\n").data(using: .utf8) else { return }
+        if FileManager.default.fileExists(atPath: url.path) {
+            if let handle = try? FileHandle(forWritingTo: url) {
+                _ = try? handle.seekToEnd()
+                try? handle.write(contentsOf: data)
+                try? handle.close()
             }
+        } else {
+            try? data.write(to: url, options: [.atomic])
         }
     }
 }

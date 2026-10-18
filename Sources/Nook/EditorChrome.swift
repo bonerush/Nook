@@ -148,7 +148,9 @@ struct PlanningErrorBanner: View {
             return "API key rejected. Check AI settings."
         case .rateLimited:
             return "Rate limited. Try again shortly."
-        case .timeout, .network:
+        case .timeout:
+            return "AI request timed out. Try again."
+        case .network:
             return "AI unavailable. Check your connection."
         case .truncated:
             return "AI response was truncated. Try a shorter script."
