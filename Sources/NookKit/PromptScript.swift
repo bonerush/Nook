@@ -582,7 +582,7 @@ public enum PromptScriptBuilder {
             if token.contains("…") || token.contains("...") { pause = 0.84 }
             // A paragraph is a complete thought, not just another sentence.
             // Give the reader enough silence to reset before the next thought.
-            if isParagraphEnd { pause += 0.72 }
+            if isParagraphEnd { pause += 1.0 }
             return pause
         }
 

@@ -15,7 +15,7 @@ func runPausePolicyTests() {
     }
     let paragraphGap = document.words[paragraphEnd.id + 1].start
         - document.words[paragraphEnd.id].end
-    check(paragraphGap >= 1.20, "Paragraph breath is at least 1.2s")
+    check(paragraphGap >= 1.50, "Paragraph breath is at least 1.5s")
 
     guard let sentenceEnd = script.tokens.first(where: {
         $0.isSentenceEnd && !$0.isParagraphEnd
@@ -27,7 +27,7 @@ func runPausePolicyTests() {
         - document.words[sentenceEnd.id].end
     check(sentenceGap >= 0.58, "Sentence breath is at least 0.58s")
     check(
-        paragraphGap > sentenceGap + 0.50,
+        paragraphGap > sentenceGap + 0.80,
         "Paragraph breath is clearly longer than a sentence breath"
     )
 }
