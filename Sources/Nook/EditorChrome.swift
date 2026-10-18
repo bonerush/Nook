@@ -13,16 +13,16 @@ struct AIStatusView: View {
     private var status: (label: String, color: Color, planning: Bool) {
         switch model.planningState {
         case .planning:
-            return ("AI PLANNING", NookColor.warning, true)
+            return ("AI planning", NookColor.warning, true)
         case .failed(_):
-            return ("AI ERROR", NookColor.danger, false)
+            return ("AI error", NookColor.danger, false)
         case .idle:
             break
         }
         if model.canUseAI {
-            return ("AI READY", NookColor.success, false)
+            return ("AI ready", NookColor.success, false)
         }
-        return ("AI NOT CONFIGURED", NookColor.textTertiary, false)
+        return ("AI not configured", NookColor.textTertiary, false)
     }
 
     var body: some View {
@@ -38,8 +38,7 @@ struct AIStatusView: View {
                     .frame(width: 4, height: 4)
             }
             Text(status.label)
-                .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .tracking(0.6)
+                .font(.system(size: 10.5, weight: .medium))
                 .foregroundStyle(status.color)
         }
         .padding(.horizontal, 7)
@@ -87,11 +86,15 @@ struct EditorTopBar: View {
             HStack(spacing: 12) {
                 AIStatusView(model: model)
 
-                Button("AI settings") {
+                Button {
                     actions.openAISettings()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 11, weight: .medium))
                 }
-                .buttonStyle(LinearSecondaryButtonStyle())
-                .help("Configure AI phrasing")
+                .buttonStyle(LinearIconButtonStyle())
+                .help("AI settings")
+                .accessibilityLabel("AI settings")
 
                 Button {
                     if isPlanning {
@@ -125,13 +128,7 @@ struct EditorTopBar: View {
         .padding(.leading, 80)
         .padding(.trailing, 24)
         .frame(height: 52)
-        .background(
-            LinearGradient(
-                colors: [NookColor.canvas.opacity(0.96), NookColor.canvas.opacity(0.78)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .background(.regularMaterial)
     }
 }
 
@@ -214,9 +211,8 @@ struct EditorStatusBar: View {
                 Circle()
                     .fill(model.planSource == .ai ? NookColor.success : NookColor.textTertiary)
                     .frame(width: 4, height: 4)
-                Text(model.planSource == .ai ? "AI PLAN" : "LOCAL")
-                    .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
-                    .tracking(0.6)
+                Text(model.planSource == .ai ? "AI plan" : "Local")
+                    .font(.system(size: 10.5, weight: .medium))
                     .foregroundStyle(NookColor.textSecondary)
             }
 
@@ -230,9 +226,8 @@ struct EditorStatusBar: View {
 
             Spacer(minLength: 0)
 
-            Text("SAVED")
-                .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .tracking(0.8)
+            Text("Saved")
+                .font(.system(size: 10.5, weight: .regular))
                 .foregroundStyle(NookColor.textTertiary)
 
             LinearKeycap("⌃⌥Space")

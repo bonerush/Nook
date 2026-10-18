@@ -7,7 +7,7 @@ struct AISettingsOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.58)
+            Color.black.opacity(0.18)
                 .ignoresSafeArea()
                 .onTapGesture(perform: onClose)
 
@@ -76,7 +76,7 @@ struct AISettingsOverlay: View {
                 RoundedRectangle(cornerRadius: NookRadius.overlay, style: .continuous)
                     .stroke(NookColor.borderStrong, lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.5), radius: 30, y: 18)
+            .shadow(color: .black.opacity(0.12), radius: 28, y: 14)
             .overlay(alignment: .topLeading) {
                 FirstSettingsFieldFocusBridge()
                     .frame(width: 0, height: 0)
@@ -89,9 +89,8 @@ struct AISettingsOverlay: View {
             Text("AI phrasing")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(NookColor.textPrimary)
-            Text("OPENAI-COMPATIBLE")
-                .font(.system(size: 8.5, weight: .semibold, design: .monospaced))
-                .tracking(1.1)
+            Text("OpenAI-compatible")
+                .font(.system(size: 10, weight: .regular))
                 .foregroundStyle(NookColor.textTertiary)
             Spacer()
             Button(action: onClose) {
@@ -106,9 +105,8 @@ struct AISettingsOverlay: View {
     private var providerPresets: some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("Provider")
-                .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
-                .tracking(0.9)
-                .foregroundStyle(NookColor.textTertiary)
+                .font(.system(size: 10.5, weight: .medium))
+                .foregroundStyle(NookColor.textSecondary)
 
             HStack(spacing: 6) {
                 ForEach(LLMProviderPreset.allCases, id: \.self) { preset in
@@ -131,7 +129,7 @@ struct AISettingsOverlay: View {
         if supportsReasoningDraft {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .center, spacing: 8) {
-                    LinearSectionLabel(title: "Reasoning", accessory: "THINKING MODE")
+                    LinearSectionLabel(title: "Reasoning", accessory: "Thinking mode")
                     Spacer(minLength: 8)
                     Toggle("", isOn: $model.aiReasoningEnabledDraft)
                         .labelsHidden()
@@ -222,9 +220,8 @@ struct AISettingsOverlay: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(title)
-                .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
-                .tracking(0.9)
-                .foregroundStyle(NookColor.textTertiary)
+                .font(.system(size: 10.5, weight: .medium))
+                .foregroundStyle(NookColor.textSecondary)
             ZStack(alignment: .leading) {
                 if text.wrappedValue.isEmpty {
                     Text(placeholder)
@@ -256,9 +253,8 @@ struct AISettingsOverlay: View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 6) {
                 Text("API key")
-                    .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
-                    .tracking(0.9)
-                    .foregroundStyle(NookColor.textTertiary)
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundStyle(NookColor.textSecondary)
                 Spacer()
                 if model.hasAPIKey {
                     HStack(spacing: 6) {

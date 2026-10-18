@@ -29,7 +29,7 @@ struct ScriptPane: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            LinearSectionLabel(title: "Script", accessory: "ENGLISH · AUTO-PHRASED")
+            LinearSectionLabel(title: "Script", accessory: "English · auto-phrased")
 
             Spacer(minLength: 12)
 
@@ -53,6 +53,7 @@ struct ScriptPane: View {
                 .foregroundStyle(NookColor.textPrimary.opacity(0.9))
                 .tint(NookColor.accent)
                 .scrollContentBackground(.hidden)
+                .scrollIndicators(.hidden)
                 .background(Color.clear)
                 .padding(.horizontal, 1)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -94,7 +95,7 @@ struct ScriptPane: View {
             HStack(alignment: .center, spacing: 10) {
                 LinearSectionLabel(
                     title: "Phrase map",
-                    accessory: "FIRST THREE BREATHS"
+                    accessory: "First three breaths"
                 )
                 Spacer(minLength: 8)
                 LinearSourceBadge(source: model.planSource)
@@ -127,10 +128,9 @@ struct ScriptPane: View {
                             Spacer(minLength: 0)
 
                             if index == 0 {
-                                Text("NEXT")
-                                    .font(.system(size: 8.5, weight: .semibold, design: .monospaced))
-                                    .tracking(0.8)
-                                    .foregroundStyle(NookColor.accent.opacity(0.85))
+                                Text("Next")
+                                    .font(.system(size: 9.5, weight: .medium))
+                                    .foregroundStyle(NookColor.accent)
                             }
                         }
                         .frame(height: 22)

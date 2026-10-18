@@ -32,7 +32,7 @@ struct InspectorPane: View {
             .padding(.bottom, 18)
         }
         .frame(width: 296)
-        .background(NookColor.pane.opacity(0.34))
+        .background(.thinMaterial)
     }
 
     private var hostLabel: String {
@@ -47,7 +47,7 @@ struct InspectorPane: View {
 
     private var phrasingSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            LinearSectionLabel(title: "Phrasing", accessory: "AT START")
+            LinearSectionLabel(title: "Phrasing", accessory: "At start")
 
             HStack(spacing: 7) {
                 LinearSourceBadge(source: model.planSource)
@@ -89,7 +89,7 @@ struct InspectorPane: View {
 
     private var paceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LinearSectionLabel(title: "Pace", accessory: "WORDS PER MINUTE")
+            LinearSectionLabel(title: "Pace", accessory: "Words per minute")
 
             HStack(spacing: 6) {
                 ForEach(pacePresets) { preset in
@@ -150,7 +150,7 @@ struct InspectorPane: View {
 
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LinearSectionLabel(title: "Appearance", accessory: "NOTCH STAGE")
+            LinearSectionLabel(title: "Appearance", accessory: "Notch stage")
 
             sliderRow(
                 title: "Type size",
@@ -203,7 +203,7 @@ struct InspectorPane: View {
 
     private var privacySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            LinearSectionLabel(title: "Privacy", accessory: "SCREEN SHARING")
+            LinearSectionLabel(title: "Privacy", accessory: "Screen sharing")
 
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 4) {

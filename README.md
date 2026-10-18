@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>把视线留在镜头里。</strong><br>
-  悬浮在 Mac 刘海下方的英文提词器，带 AI 断句、Linear 工作区和官方 Liquid Glass。
+  悬浮在 Mac 刘海下方的英文提词器，带 AI 断句、Apple 浅色工作区和官方 Liquid Glass。
 </p>
 
 Nook 是一个为英文自我介绍、面试和短演讲准备的小型 macOS 提词器。它把讲稿拆成适合换气的短句，以逐词填光的方式提示节奏；提词窗固定在刘海正下方，读稿时视线自然落在摄像头附近。
@@ -15,7 +15,7 @@ Nook 是一个为英文自我介绍、面试和短演讲准备的小型 macOS �
 
 - **严格不改写原文的 AI 断句**：本地 tokenizer 先给每个词编号，云端 OpenAI-compatible 模型只返回行边界、行尾停顿和强调索引；显示文本始终来自本地 token，模型无法改写、翻译或增删讲稿。
 - **只在 Start 时联网**：输入、拖动滑杆和编辑讲稿都不会触发网络请求。配置不完整、请求失败或取消时，编辑器会明确显示状态，不会悄悄使用降级结果。
-- **Linear 风格编辑器**：近黑画布、1 px 分隔线、克制的 periwinkle 强调色、296 pt 检查器、文档优先的排版。
+- **Apple 浅色编辑器**：纯白稿纸、系统 material 工具栏 / 侧栏、石墨色标签、单一系统蓝强调色、296 pt 检查器、文档优先的排版；不再使用深紫配色。
 - **官方 Liquid Glass 提词面板**：macOS 26+ 使用系统 glassEffect；旧系统使用 NSVisualEffectView fallback。面板现在是无外阴影的纯玻璃，窗口与卡片同尺寸。
 - **可控制的 reasoning 模式**：DeepSeek Flash 默认开启 thinking，可选择 Low / High / Max effort；请求会发送 thinking 开关、effort 和 JSON mode，并为 reasoning tokens 预留输出预算。
 - **Apple Music 式歌词动效**：三行歌词栈、逐词填光、行切换弹簧、上一行 / 下一行淡出与模糊，以及极细进度轨。
@@ -126,7 +126,7 @@ Sources/NookKit/OpenAICompatibleClient.swift
 Sources/NookKit/PhrasePlanCache.swift
 Sources/NookKit/AIPlanningCoordinator.swift
 Sources/Nook/AppModel.swift              # 讲稿、AI 状态、Start 流程
-Sources/Nook/LinearDesign.swift          # Linear tokens 与 controls
+Sources/Nook/LinearDesign.swift          # 浅色设计 tokens 与 controls
 Sources/Nook/EditorChrome.swift          # top bar / status / error banner
 Sources/Nook/ScriptPane.swift
 Sources/Nook/InspectorPane.swift

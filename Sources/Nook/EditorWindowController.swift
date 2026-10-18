@@ -21,12 +21,12 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
         window.backgroundColor = NSColor(
-            calibratedRed: 0.031,
-            green: 0.035,
-            blue: 0.043,
+            calibratedRed: 1.0,
+            green: 1.0,
+            blue: 1.0,
             alpha: 1
         )
-        window.appearance = NSAppearance(named: .darkAqua)
+        window.appearance = NSAppearance(named: .aqua)
         window.minSize = NSSize(width: 960, height: 680)
         window.contentMinSize = NSSize(width: 960, height: 680)
         window.setContentSize(NSSize(width: 1040, height: 720))
@@ -76,6 +76,20 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             return
         }
         window.makeFirstResponder(textView)
+        configureScriptScrollView(textView)
+    }
+
+    /// SwiftUI's TextEditor does not always honor scrollIndicators(.hidden)
+    /// on macOS. The script is a prose surface, so remove the NSScrollView
+    /// scroller while keeping trackpad/wheel scrolling intact.
+    private func configureScriptScrollView(_ textView: NSTextView) {
+        guard let scrollView = textView.enclosingScrollView else { return }
+        scrollView.hasVerticalScroller = false
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.scrollerStyle = .overlay
+        scrollView.verticalScroller?.alphaValue = 0
+        scrollView.horizontalScroller?.alphaValue = 0
     }
 }
 

@@ -55,7 +55,7 @@ struct EditorView: View {
         }
         .frame(minWidth: 960, minHeight: 680)
         .ignoresSafeArea(.container, edges: .top)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .onExitCommand {
             if model.isAISettingsPresented {
                 model.closeAISettings()

@@ -13,22 +13,24 @@ extension Color {
 }
 
 enum NookColor {
-    static let canvas = Color.nookHex(0x08090B)
-    static let pane = Color.nookHex(0x0C0D10)
-    static let raised = Color.nookHex(0x141519)
-    static let raisedHover = Color.nookHex(0x1A1C21)
-    static let border = Color.nookHex(0x23252A)
-    static let borderStrong = Color.nookHex(0x2E3138)
-    static let textPrimary = Color.nookHex(0xF2F3F5)
-    static let textSecondary = Color.nookHex(0x8C9099)
-    static let textTertiary = Color.nookHex(0x80848E)
-    static let accent = Color.nookHex(0x7C86FF)
-    static let accentButton = Color.nookHex(0x5A63E6)
-    static let accentSoft = Color.nookHex(0x7C86FF, opacity: 0.14)
-    static let success = Color.nookHex(0x69D6A3)
-    static let warning = Color.nookHex(0xE7B365)
-    static let danger = Color.nookHex(0xFF7A86)
-    static let ink = Color.nookHex(0x0D0E11)
+    // Apple's light system palette: white paper, graphite labels, one blue
+    // accent. No purple tint anywhere in the editor.
+    static let canvas = Color.nookHex(0xFFFFFF)
+    static let pane = Color.nookHex(0xF5F5F7)
+    static let raised = Color.nookHex(0xFFFFFF)
+    static let raisedHover = Color.nookHex(0xECECF0)
+    static let border = Color.nookHex(0xE5E5EA)
+    static let borderStrong = Color.nookHex(0xD1D1D6)
+    static let textPrimary = Color.nookHex(0x1D1D1F)
+    static let textSecondary = Color.nookHex(0x515154)
+    static let textTertiary = Color.nookHex(0x6E6E73)
+    static let accent = Color.nookHex(0x007AFF)
+    static let accentButton = Color.nookHex(0x0071E3)
+    static let accentSoft = Color.nookHex(0x007AFF, opacity: 0.10)
+    static let success = Color.nookHex(0x248A3D)
+    static let warning = Color.nookHex(0xB25000)
+    static let danger = Color.nookHex(0xD70015)
+    static let ink = Color.nookHex(0xFFFFFF)
 }
 
 enum NookRadius {
@@ -61,17 +63,15 @@ struct LinearSectionLabel: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 7) {
             Text(title)
-                .font(.system(size: 10.5, weight: .semibold))
-                .tracking(1.4)
-                .foregroundStyle(NookColor.textSecondary)
+                .font(.system(size: 11.5, weight: .semibold))
+                .foregroundStyle(NookColor.textPrimary)
             if let accessory {
                 Text(accessory)
-                    .font(.system(size: 9, weight: .regular, design: .monospaced))
+                    .font(.system(size: 10, weight: .regular))
                     .foregroundStyle(NookColor.textTertiary)
             }
             Spacer(minLength: 0)
         }
-        .textCase(.uppercase)
     }
 }
 
@@ -79,7 +79,7 @@ struct LinearSourceBadge: View {
     let source: PhrasePlanSource
 
     private var label: String {
-        source == .ai ? "AI PLAN" : "LOCAL"
+        source == .ai ? "AI plan" : "Local"
     }
 
     private var color: Color {
@@ -92,8 +92,7 @@ struct LinearSourceBadge: View {
                 .fill(color)
                 .frame(width: 4, height: 4)
             Text(label)
-                .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .tracking(0.7)
+                .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(color)
         }
         .padding(.horizontal, 7)
@@ -124,7 +123,7 @@ struct LinearKeycap: View {
             .padding(.vertical, 3)
             .background(
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(NookColor.raised)
+                    .fill(NookColor.pane)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
@@ -152,30 +151,8 @@ struct NotchGlyph: View {
 
 struct LinearCanvasBackground: View {
     var body: some View {
-        ZStack {
-            NookColor.canvas
-            RadialGradient(
-                colors: [NookColor.accent.opacity(0.055), .clear],
-                center: UnitPoint(x: 0.5, y: 0.0),
-                startRadius: 0,
-                endRadius: 520
-            )
-            Canvas { context, size in
-                let step: CGFloat = 24
-                var path = Path()
-                var x: CGFloat = 0
-                while x < size.width {
-                    var y: CGFloat = 0
-                    while y < size.height {
-                        path.addEllipse(in: CGRect(x: x, y: y, width: 0.8, height: 0.8))
-                        y += step
-                    }
-                    x += step
-                }
-                context.fill(path, with: .color(.white.opacity(0.025)))
-            }
-        }
-        .ignoresSafeArea()
+        NookColor.canvas
+            .ignoresSafeArea()
     }
 }
 
