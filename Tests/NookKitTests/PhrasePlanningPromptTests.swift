@@ -100,7 +100,7 @@ func runOpenAICompatibleClientTests() {
             )
             let body = try! JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
             checkEqual(body["model"] as? String, "test-model", "Client sends the model")
-            checkEqual(body["max_tokens"] as? Int, 900, "Client caps output tokens")
+            checkEqual(body["max_tokens"] as? Int, 2_048, "Client caps output tokens")
             checkEqual(body["stream"] as? Bool, false, "Client requests a non-streaming response")
             checkEqual(
                 request.value(forHTTPHeaderField: "Content-Type"),

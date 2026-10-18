@@ -40,7 +40,10 @@ public final class OpenAICompatibleClient {
             budget: budget,
             wordsPerMinute: wordsPerMinute
         )
-        let outputBudget = max(900, min(4_000, script.tokens.count * 6))
+        // Long scripts and OpenAI-compatible reasoning models can spend
+        // completion tokens before emitting the JSON plan. Keep a generous
+        // ceiling; unused completion budget is not charged.
+        let outputBudget = max(2_048, min(8_192, script.tokens.count * 12))
         let body: [String: Any] = [
             "model": configuration.model,
             "messages": [
@@ -97,6 +100,16 @@ public final class OpenAICompatibleClient {
         }
 
         struct Envelope: Decodable {
+            struct Usage: Decodable {
+                let promptTokens: Int?
+                let completionTokens: Int?
+
+                enum CodingKeys: String, CodingKey {
+                    case promptTokens = "prompt_tokens"
+                    case completionTokens = "completion_tokens"
+                }
+            }
+
             struct Choice: Decodable {
                 struct Message: Decodable {
                     let content: String
@@ -110,6 +123,7 @@ public final class OpenAICompatibleClient {
                 }
             }
             let choices: [Choice]
+            let usage: Usage?
         }
 
         do {
@@ -118,6 +132,14 @@ public final class OpenAICompatibleClient {
                 throw PhrasePlanningError.invalidResponse
             }
             if choice.finishReason == "length" {
+                recordTruncation(
+                    endpoint: endpoint,
+                    configuration: configuration,
+                    outputBudget: outputBudget,
+                    promptTokens: envelope.usage?.promptTokens,
+                    completionTokens: envelope.usage?.completionTokens,
+                    contentCharacters: choice.message.content.count
+                )
                 throw PhrasePlanningError.truncated
             }
             let text = choice.message.content
@@ -129,6 +151,40 @@ public final class OpenAICompatibleClient {
             throw error
         } catch {
             throw PhrasePlanningError.invalidResponse
+        }
+    }
+
+    /// Metadata-only diagnostic. It never records the script, response body,
+    /// or API key; it exists so a truncated provider response can be debugged.
+    private func recordTruncation(
+        endpoint: URL,
+        configuration: LLMConfiguration,
+        outputBudget: Int,
+        promptTokens: Int?,
+        completionTokens: Int?,
+        contentCharacters: Int
+    ) {
+        let directory = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("Nook", isDirectory: true)
+        guard let directory else { return }
+        try? FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        let stamp = ISO8601DateFormatter().string(from: Date())
+        let line = "time=\(stamp) host=\(endpoint.host ?? "?") model=\(configuration.model) requested=\(outputBudget) prompt=\(promptTokens ?? -1) completion=\(completionTokens ?? -1) contentChars=\(contentCharacters)\n"
+        let url = directory.appendingPathComponent("ai-debug.log")
+        if let data = line.data(using: .utf8) {
+            if FileManager.default.fileExists(atPath: url.path) {
+                if let handle = try? FileHandle(forWritingTo: url) {
+                    _ = try? handle.seekToEnd()
+                    try? handle.write(contentsOf: data)
+                    try? handle.close()
+                }
+            } else {
+                try? data.write(to: url, options: [.atomic])
+            }
         }
     }
 }
