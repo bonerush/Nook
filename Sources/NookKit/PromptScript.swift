@@ -13,8 +13,8 @@ public enum PromptMetrics {
     public static let cardBottomPadding: CGFloat = 14
     public static let contentToProgressGap: CGFloat = 14
     public static let progressAreaHeight: CGFloat = 32
-    /// Transparent breathing room around the card for its soft shadow.
-    public static let windowShadowMargin: CGFloat = 28
+    /// The notch stage is now edge-to-edge glass with no shadow halo.
+    public static let windowShadowMargin: CGFloat = 0
 
     public static func wordSpacing(fontSize: CGFloat) -> CGFloat {
         max(3, (fontSize * 0.23).rounded())

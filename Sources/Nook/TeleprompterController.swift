@@ -17,8 +17,11 @@ final class TeleprompterController {
     private var hostingView: NSHostingView<TeleprompterView>!
     private var cancellables = Set<AnyCancellable>()
     private var presentationGeneration = 0
+    private var hoverTimer: Timer?
+    private var hoverActive = false
 
     private(set) var isPresented = false
+    var onHoverChanged: ((Bool) -> Void)?
 
     init(model: AppModel, engine: PlaybackEngine, forceVisibleInCapture: Bool = false) {
         self.model = model
@@ -141,10 +144,12 @@ final class TeleprompterController {
             engine.pause()
         }
 
+        startHoverTracking()
         debugLayoutIfNeeded()
     }
 
     func hide(animated: Bool = true, pause: Bool = true) {
+        stopHoverTracking()
         if pause {
             engine.pause()
         }
@@ -183,7 +188,46 @@ final class TeleprompterController {
 
     func reposition() {
         applyFrame(animated: isPresented)
+        updateHoverState()
         debugLayoutIfNeeded()
+    }
+
+    // MARK: Hover context
+
+    private func startHoverTracking() {
+        guard isPresented else { return }
+        if hoverTimer != nil { return }
+        let timer = Timer(timeInterval: 0.08, repeats: true) { [weak self] _ in
+            self?.updateHoverState()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        hoverTimer = timer
+        updateHoverState()
+    }
+
+    private func stopHoverTracking() {
+        hoverTimer?.invalidate()
+        hoverTimer = nil
+        setHoverActive(false)
+    }
+
+    private func updateHoverState() {
+        guard isPresented, panel != nil else {
+            setHoverActive(false)
+            return
+        }
+        let point = NSEvent.mouseLocation
+        setHoverActive(panel.frame.contains(point))
+    }
+
+    private func setHoverActive(_ active: Bool) {
+        guard active != hoverActive else { return }
+        hoverActive = active
+        onHoverChanged?(active)
+    }
+
+    deinit {
+        stopHoverTracking()
     }
 
     // MARK: Geometry

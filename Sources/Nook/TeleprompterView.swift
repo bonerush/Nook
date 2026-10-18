@@ -12,10 +12,6 @@ struct TeleprompterView: View {
     private var cardWidth: CGFloat { CGFloat(model.cardWidth) }
     private var cardHeight: CGFloat { PromptMetrics.cardHeight(fontSize: fontSize) }
 
-    private var cardShape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-    }
-
     var body: some View {
         OfficialGlassSurface(cornerRadius: cornerRadius) {
             ZStack {
@@ -58,15 +54,6 @@ struct TeleprompterView: View {
             .frame(width: cardWidth, height: cardHeight)
         }
         .frame(width: cardWidth, height: cardHeight)
-        .overlay(
-            cardShape.stroke(.white.opacity(0.18), lineWidth: 0.8)
-        )
-        .shadow(color: .black.opacity(0.45), radius: 24, y: 12)
-        .padding(PromptMetrics.windowShadowMargin)
-        .frame(
-            width: cardWidth + PromptMetrics.windowShadowMargin * 2,
-            height: cardHeight + PromptMetrics.windowShadowMargin * 2
-        )
         .environment(\.colorScheme, .dark)
     }
 }

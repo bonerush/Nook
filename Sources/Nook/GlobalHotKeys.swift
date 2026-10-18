@@ -46,7 +46,9 @@ final class GlobalHotKeyManager {
     private static let signature: OSType = 0x4E4F4F4B // 'NOOK'
     private var handlerRef: EventHandlerRef?
     private var hotKeyRefs: [EventHotKeyRef] = []
+    private var hoverHotKeyRefs: [EventHotKeyRef] = []
     private var installed = false
+    private var hoverActive = false
 
     func install() {
         guard !installed else { return }
@@ -92,11 +94,55 @@ final class GlobalHotKeyManager {
         installed = true
     }
 
+    /// While the pointer is over the glass panel, register the bare keys as
+    /// context-sensitive hotkeys. They are removed as soon as the pointer
+    /// leaves, so normal typing elsewhere is unaffected.
+    func setHoverActive(_ active: Bool) {
+        guard installed, active != hoverActive else { return }
+        hoverActive = active
+
+        if !active {
+            for ref in hoverHotKeyRefs {
+                UnregisterEventHotKey(ref)
+            }
+            hoverHotKeyRefs.removeAll()
+            return
+        }
+
+        for action in NookHotKeyAction.allCases {
+            var hotKeyRef: EventHotKeyRef?
+            let hotKeyID = EventHotKeyID(
+                signature: Self.signature,
+                id: 100 + action.rawValue
+            )
+            let status = RegisterEventHotKey(
+                action.keyCode,
+                0,
+                hotKeyID,
+                GetApplicationEventTarget(),
+                0,
+                &hotKeyRef
+            )
+            if status == noErr, let hotKeyRef {
+                hoverHotKeyRefs.append(hotKeyRef)
+            } else {
+                NSLog(
+                    "Nook: could not register hover (action.shortcutLabel) (status (status))"
+                )
+            }
+        }
+    }
+
     func uninstall() {
         for hotKeyRef in hotKeyRefs {
             UnregisterEventHotKey(hotKeyRef)
         }
         hotKeyRefs.removeAll()
+        for hotKeyRef in hoverHotKeyRefs {
+            UnregisterEventHotKey(hotKeyRef)
+        }
+        hoverHotKeyRefs.removeAll()
+        hoverActive = false
 
         if let handlerRef {
             RemoveEventHandler(handlerRef)
@@ -131,7 +177,9 @@ private func nookHotKeyHandler(
 
     guard status == noErr else { return noErr }
 
-    let actionID = hotKeyID.id
+    let rawID = hotKeyID.id
+    let actionID = rawID >= 100 ? rawID - 100 : rawID
+    guard NookHotKeyAction(rawValue: actionID) != nil else { return noErr }
     DispatchQueue.main.async {
         NotificationCenter.default.post(
             name: .nookHotKeyPressed,

@@ -399,6 +399,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func installHotKeys() {
         hotKeyManager = GlobalHotKeyManager()
         hotKeyManager.install()
+        panelController.onHoverChanged = { [weak self] hovering in
+            self?.hotKeyManager.setHoverActive(hovering)
+        }
 
         hotKeyObserver = NotificationCenter.default.addObserver(
             forName: .nookHotKeyPressed,
