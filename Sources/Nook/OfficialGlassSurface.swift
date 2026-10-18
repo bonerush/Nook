@@ -13,7 +13,7 @@ struct OfficialGlassSurface<Content: View>: View {
         if #available(macOS 26.0, *) {
             content
                 .glassEffect(
-                    .regular.tint(.black.opacity(0.38)),
+                    .regular.tint(.black.opacity(0.62)),
                     in: .rect(cornerRadius: cornerRadius)
                 )
                 // The dark lyric scrim and the glass material must share the

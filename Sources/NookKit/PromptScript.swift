@@ -577,20 +577,22 @@ public enum PromptScriptBuilder {
         let punctuation = trailingPunctuation(of: token)
 
         if isSentenceEnd {
-            var pause: TimeInterval = 0.55
-            if punctuation == "?" || punctuation == "!" { pause = 0.62 }
-            if token.contains("…") || token.contains("...") { pause = 0.7 }
-            if isParagraphEnd { pause += 0.36 }
+            var pause: TimeInterval = 0.62
+            if punctuation == "?" || punctuation == "!" { pause = 0.72 }
+            if token.contains("…") || token.contains("...") { pause = 0.84 }
+            // A paragraph is a complete thought, not just another sentence.
+            // Give the reader enough silence to reset before the next thought.
+            if isParagraphEnd { pause += 0.72 }
             return pause
         }
 
         switch punctuation {
-        case ",": return 0.18
-        case ";", ":": return 0.27
+        case ",": return 0.16
+        case ";", ":": return 0.28
         case "—", "–": return 0.3
-        case "…": return 0.42
+        case "…": return 0.46
         default:
-            if token.contains("...") { return 0.42 }
+            if token.contains("...") { return 0.46 }
             return 0
         }
     }

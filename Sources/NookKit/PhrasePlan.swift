@@ -201,28 +201,6 @@ public enum PhrasePlanValidator {
         )
     }
 
-    public static func pauseMilliseconds(for token: SpeechToken) -> Int {
-        if token.isSentenceEnd {
-            return 550
-        }
-        let trimmed = token.text.trimmingCharacters(
-            in: CharacterSet(charactersIn: "\"'”’)]}")
-        )
-        switch trimmed.last {
-        case ",":
-            return 180
-        case ";", ":":
-            return 270
-        case "—", "–":
-            return 300
-        case "…":
-            return 420
-        default:
-            if trimmed.contains("...") { return 420 }
-            return 0
-        }
-    }
-
     private static func combine(
         _ lhs: PhraseGroup,
         _ rhs: PhraseGroup,
