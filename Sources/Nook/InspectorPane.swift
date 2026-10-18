@@ -32,7 +32,7 @@ struct InspectorPane: View {
             .padding(.bottom, 18)
         }
         .frame(width: 296)
-        .background(.thinMaterial)
+        .background(AppleChromeBackground())
     }
 
     private var hostLabel: String {
@@ -48,13 +48,6 @@ struct InspectorPane: View {
     private var phrasingSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             LinearSectionLabel(title: "Phrasing", accessory: "At start")
-
-            HStack(spacing: 7) {
-                LinearSourceBadge(source: model.planSource)
-                Text(model.canUseAI ? "AI phrasing at Start" : "Local line breaker")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundStyle(NookColor.textSecondary)
-            }
 
             if model.llmConfiguration.isComplete {
                 VStack(alignment: .leading, spacing: 3) {
@@ -74,8 +67,8 @@ struct InspectorPane: View {
                     ? "Line breaks and pauses are planned by AI at Start."
                     : "Local line breaker. Configure AI to phrase at Start."
             )
-                .font(.system(size: 11, weight: .regular))
-                .foregroundStyle(NookColor.textTertiary)
+                .font(.system(size: 11.5, weight: .regular))
+                .foregroundStyle(NookColor.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
 
@@ -227,7 +220,7 @@ struct InspectorPane: View {
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .tint(NookColor.accent)
-                .controlSize(.mini)
+                .controlSize(.small)
                 .accessibilityLabel("Hide from screen sharing")
             }
         }

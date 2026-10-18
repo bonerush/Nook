@@ -23,11 +23,11 @@ enum NookColor {
     static let borderStrong = Color.nookHex(0xD1D1D6)
     static let textPrimary = Color.nookHex(0x1D1D1F)
     static let textSecondary = Color.nookHex(0x515154)
-    static let textTertiary = Color.nookHex(0x6E6E73)
+    static let textTertiary = Color.nookHex(0x5F5F64)
     static let accent = Color.nookHex(0x007AFF)
     static let accentButton = Color.nookHex(0x0071E3)
     static let accentSoft = Color.nookHex(0x007AFF, opacity: 0.10)
-    static let success = Color.nookHex(0x248A3D)
+    static let success = Color.nookHex(0x1F7A34)
     static let warning = Color.nookHex(0xB25000)
     static let danger = Color.nookHex(0xD70015)
     static let ink = Color.nookHex(0xFFFFFF)
@@ -90,9 +90,9 @@ struct LinearSourceBadge: View {
         HStack(spacing: 6) {
             Circle()
                 .fill(color)
-                .frame(width: 4, height: 4)
+                .frame(width: 6, height: 6)
             Text(label)
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: 10.5, weight: .medium))
                 .foregroundStyle(color)
         }
         .padding(.horizontal, 7)
@@ -133,26 +133,21 @@ struct LinearKeycap: View {
     }
 }
 
-struct NotchGlyph: View {
-    var body: some View {
-        ZStack(alignment: .top) {
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(NookColor.textPrimary.opacity(0.92))
-                .frame(width: 18, height: 10)
-            Capsule(style: .continuous)
-                .fill(NookColor.canvas)
-                .frame(width: 9, height: 4)
-                .offset(y: 1)
-        }
-        .frame(width: 18, height: 12)
-        .accessibilityHidden(true)
-    }
-}
-
 struct LinearCanvasBackground: View {
     var body: some View {
         NookColor.canvas
             .ignoresSafeArea()
+    }
+}
+
+/// One shared light chrome for the toolbar and the inspector. The white tint
+/// keeps both materials on the same lightness instead of letting the default
+/// materials turn into two different gray bands.
+struct AppleChromeBackground: View {
+    var body: some View {
+        Rectangle()
+            .fill(.regularMaterial)
+            .overlay(NookColor.canvas.opacity(0.18))
     }
 }
 
@@ -164,7 +159,7 @@ struct LinearPrimaryButtonStyle: ButtonStyle {
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(.white)
             .padding(.horizontal, 16)
-            .frame(height: 32)
+            .frame(height: 30)
             .background(
                 RoundedRectangle(cornerRadius: NookRadius.control, style: .continuous)
                     .fill(NookColor.accentButton)
@@ -174,7 +169,7 @@ struct LinearPrimaryButtonStyle: ButtonStyle {
                     .stroke(.white.opacity(configuration.isPressed ? 0.28 : 0.16), lineWidth: 0.7)
             )
             .brightness(configuration.isPressed ? -0.08 : 0)
-            .opacity(isEnabled ? 1 : 0.34)
+            .opacity(isEnabled ? 1 : 0.5)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
@@ -185,16 +180,13 @@ struct LinearIconButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(NookColor.textSecondary)
-            .frame(width: 24, height: 24)
+            .frame(width: 28, height: 28)
             .background(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(configuration.isPressed ? NookColor.raisedHover : NookColor.raised)
+                    .fill(configuration.isPressed ? NookColor.raisedHover : Color.clear)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .stroke(NookColor.border, lineWidth: 0.8)
-            )
-            .opacity(isEnabled ? 1 : 0.34)
+            .contentShape(Rectangle())
+            .opacity(isEnabled ? 1 : 0.5)
     }
 }
 
@@ -206,7 +198,7 @@ struct LinearSecondaryButtonStyle: ButtonStyle {
             .font(.system(size: 11.5, weight: .medium))
             .foregroundStyle(NookColor.textPrimary.opacity(0.78))
             .padding(.horizontal, 10)
-            .frame(height: 28)
+            .frame(height: 30)
             .background(
                 RoundedRectangle(cornerRadius: NookRadius.control, style: .continuous)
                     .fill(configuration.isPressed ? NookColor.raisedHover : Color.clear)
@@ -215,7 +207,7 @@ struct LinearSecondaryButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: NookRadius.control, style: .continuous)
                     .stroke(NookColor.border, lineWidth: 0.8)
             )
-            .opacity(isEnabled ? 1 : 0.34)
+            .opacity(isEnabled ? 1 : 0.5)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }

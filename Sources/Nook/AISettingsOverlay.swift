@@ -72,10 +72,6 @@ struct AISettingsOverlay: View {
             .frame(width: 560)
             .background(NookColor.raised)
             .clipShape(RoundedRectangle(cornerRadius: NookRadius.overlay, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: NookRadius.overlay, style: .continuous)
-                    .stroke(NookColor.borderStrong, lineWidth: 1)
-            )
             .shadow(color: .black.opacity(0.12), radius: 28, y: 14)
             .overlay(alignment: .topLeading) {
                 FirstSettingsFieldFocusBridge()
@@ -135,7 +131,7 @@ struct AISettingsOverlay: View {
                         .labelsHidden()
                         .toggleStyle(.switch)
                         .tint(NookColor.accent)
-                        .controlSize(.mini)
+                        .controlSize(.small)
                         .accessibilityLabel("Thinking mode")
                 }
 

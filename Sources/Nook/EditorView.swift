@@ -43,7 +43,6 @@ struct EditorView: View {
                 LinearHairline()
                 EditorStatusBar(model: model)
             }
-            .disabled(model.isAISettingsPresented)
             .allowsHitTesting(!model.isAISettingsPresented)
 
             if model.isAISettingsPresented {

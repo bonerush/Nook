@@ -35,7 +35,7 @@ struct AIStatusView: View {
             } else {
                 Circle()
                     .fill(status.color)
-                    .frame(width: 4, height: 4)
+                    .frame(width: 6, height: 6)
             }
             Text(status.label)
                 .font(.system(size: 10.5, weight: .medium))
@@ -66,20 +66,9 @@ struct EditorTopBar: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            NotchGlyph()
-
-            HStack(spacing: 7) {
-                Text("Nook")
-                    .font(.system(size: 15, weight: .semibold))
-                    .tracking(-0.2)
-                    .foregroundStyle(NookColor.textPrimary)
-                Text("/")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(NookColor.textTertiary.opacity(0.8))
-                Text("Interview script")
-                    .font(.system(size: 11.5, weight: .regular))
-                    .foregroundStyle(NookColor.textSecondary)
-            }
+            Text("Script")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(NookColor.textPrimary)
 
             Spacer(minLength: 12)
 
@@ -112,9 +101,6 @@ struct EditorTopBar: View {
                             Text("AI phrasing…")
                         } else {
                             Text("Start")
-                            Text("⌘↩")
-                                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.white.opacity(0.82))
                         }
                     }
                     .fixedSize()
@@ -128,7 +114,7 @@ struct EditorTopBar: View {
         .padding(.leading, 80)
         .padding(.trailing, 24)
         .frame(height: 52)
-        .background(.regularMaterial)
+        .background(AppleChromeBackground())
     }
 }
 
@@ -207,15 +193,6 @@ struct EditorStatusBar: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(model.planSource == .ai ? NookColor.success : NookColor.textTertiary)
-                    .frame(width: 4, height: 4)
-                Text(model.planSource == .ai ? "AI plan" : "Local")
-                    .font(.system(size: 10.5, weight: .medium))
-                    .foregroundStyle(NookColor.textSecondary)
-            }
-
             Text(model.speedLabel)
                 .font(.system(size: 10, weight: .regular, design: .monospaced))
                 .foregroundStyle(NookColor.textTertiary)
@@ -225,10 +202,6 @@ struct EditorStatusBar: View {
                 .foregroundStyle(NookColor.textTertiary)
 
             Spacer(minLength: 0)
-
-            Text("Saved")
-                .font(.system(size: 10.5, weight: .regular))
-                .foregroundStyle(NookColor.textTertiary)
 
             LinearKeycap("⌃⌥Space")
         }

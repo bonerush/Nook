@@ -29,7 +29,9 @@ struct ScriptPane: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            LinearSectionLabel(title: "Script", accessory: "English · auto-phrased")
+            Text("English · line breaks")
+                .font(.system(size: 10.5, weight: .medium))
+                .foregroundStyle(NookColor.textTertiary)
 
             Spacer(minLength: 12)
 
@@ -48,8 +50,8 @@ struct ScriptPane: View {
     private var editorSurface: some View {
         ZStack(alignment: .topLeading) {
             TextEditor(text: scriptBinding)
-                .font(.system(size: 16, weight: .regular))
-                .lineSpacing(5.5)
+                .font(.system(size: 17, weight: .regular))
+                .lineSpacing(6.5)
                 .foregroundStyle(NookColor.textPrimary.opacity(0.9))
                 .tint(NookColor.accent)
                 .scrollContentBackground(.hidden)
@@ -111,9 +113,9 @@ struct ScriptPane: View {
                     ForEach(Array(model.previewLines.enumerated()), id: \.element.id) { index, line in
                         HStack(alignment: .firstTextBaseline, spacing: 12) {
                             Text(String(format: "%02d", index + 1))
-                                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                                .foregroundStyle(NookColor.textTertiary.opacity(0.7))
-                                .frame(width: 18, alignment: .leading)
+                                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                .foregroundStyle(NookColor.textTertiary)
+                                .frame(width: 20, alignment: .leading)
 
                             Text(line.text)
                                 .font(.system(size: 12, weight: .regular))
@@ -129,8 +131,8 @@ struct ScriptPane: View {
 
                             if index == 0 {
                                 Text("Next")
-                                    .font(.system(size: 9.5, weight: .medium))
-                                    .foregroundStyle(NookColor.accent)
+                                    .font(.system(size: 10.5, weight: .semibold))
+                                    .foregroundStyle(NookColor.accentButton)
                             }
                         }
                         .frame(height: 22)
