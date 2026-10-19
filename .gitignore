@@ -21,6 +21,9 @@ Resources/Nook.iconset/
 # Agent workspace
 .superpowers/
 
+# Local project memory (machine-specific binding)
+.obsidian-mem
+
 # macOS
 .DS_Store
 ._*
