@@ -1,8 +1,38 @@
+# Build output
 .build/
 dist/
-.DS_Store
+build/
+DerivedData/
 *.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+*.dSYM/
+*.dSYM.zip
 
+# SwiftPM (the project builds with swiftc directly)
+.swiftpm/
+Packages/
+Package.resolved
+
+# Generated app assets
 Resources/Nook.iconset/
 
+# Agent workspace
 .superpowers/
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# Editors
+.vscode/
+.idea/
+
+# Local logs and secrets
+*.log
+.env
+.env.*
