@@ -117,16 +117,23 @@ final class TeleprompterController {
         applyFrame(animated: false)
 
         if !isPresented {
+            let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             var startFrame = finalFrame
-            startFrame.origin.y += 9
+            if !reduceMotion {
+                startFrame.origin.y += 9
+                startFrame.size.width = finalFrame.width * 0.985
+                startFrame.origin.x = finalFrame.midX - startFrame.width / 2
+            }
             panel.alphaValue = 0
             panel.setFrame(startFrame, display: false)
             isPresented = true
             panel.orderFrontRegardless()
 
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.24
-                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                context.duration = reduceMotion ? 0.12 : 0.32
+                context.timingFunction = reduceMotion
+                    ? CAMediaTimingFunction(name: .easeOut)
+                    : CAMediaTimingFunction(controlPoints: 0.16, 0.84, 0.30, 1.0)
                 panel.animator().alphaValue = 1
                 panel.animator().setFrame(finalFrame, display: true)
             } completionHandler: { [weak self] in
@@ -170,8 +177,9 @@ final class TeleprompterController {
             return
         }
 
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.17
+            context.duration = reduceMotion ? 0.12 : 0.18
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             panel.animator().alphaValue = 0
         } completionHandler: { [weak self] in
@@ -299,6 +307,9 @@ final class TeleprompterController {
 
     private func updateCaptureVisibility() {
         guard panel != nil else { return }
+        // SharingType.none is a legacy, best-effort hint. Apple documents that
+        // it must not be used to guarantee hiding from capture, and meeting
+        // apps may ignore it. The UI copy and docs describe that limit.
         let shouldHide = model.hideFromCapture && !forceVisibleInCapture
         panel.sharingType = shouldHide ? .none : .readOnly
     }

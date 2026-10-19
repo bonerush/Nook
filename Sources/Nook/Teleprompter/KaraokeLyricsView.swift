@@ -18,20 +18,22 @@ struct KaraokeWordView: View {
             Text(text)
                 .foregroundStyle(baseColor)
 
-            if activeLine {
-                Text(text)
-                    .foregroundStyle(.white)
-                    .mask(
-                        GeometryReader { proxy in
-                            Rectangle()
-                                .frame(
-                                    width: proxy.size.width * CGFloat(min(1, max(0, progress))),
-                                    alignment: .leading
-                                )
-                        }
-                    )
-                    .shadow(color: .white.opacity(0.22), radius: 6)
-            }
+            // Keep one Text per word in both states. Inserting and removing
+            // the overlay made the ForEach produce a different number of views
+            // for the same identity, which SwiftUI cannot animate reliably.
+            Text(text)
+                .foregroundStyle(.white)
+                .mask(
+                    GeometryReader { proxy in
+                        Rectangle()
+                            .frame(
+                                width: proxy.size.width * CGFloat(min(1, max(0, progress))),
+                                alignment: .leading
+                            )
+                    }
+                )
+                .shadow(color: .white.opacity(0.22), radius: 6)
+                .opacity(activeLine ? 1 : 0)
         }
         .font(.system(size: fontSize, weight: .semibold))
         .tracking(fontSize * -0.006)

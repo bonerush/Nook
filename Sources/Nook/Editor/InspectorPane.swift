@@ -1,7 +1,21 @@
 import SwiftUI
 
+final class InspectorState: ObservableObject {
+    @Published var expanded: Set<String> = ["phrasing", "pace", "appearance", "privacy"]
+
+    func toggle(_ id: String) {
+        if expanded.contains(id) {
+            expanded.remove(id)
+        } else {
+            expanded.insert(id)
+        }
+    }
+}
+
 struct InspectorPane: View {
     @ObservedObject var model: AppModel
+
+    @ObservedObject private var state = InspectorState()
 
     private struct PacePreset: Identifiable {
         let id: String
@@ -16,23 +30,52 @@ struct InspectorPane: View {
     ]
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 0) {
-                phrasingSection
-                sectionDivider
-                paceSection
-                sectionDivider
-                appearanceSection
-                sectionDivider
-                privacySection
-                Spacer(minLength: 20)
+        VStack(spacing: 0) {
+            header
+            NookHairline()
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 20) {
+                    phrasingSection
+                    paceSection
+                    appearanceSection
+                    privacySection
+                }
+                .padding(16)
+                .padding(.bottom, 12)
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 22)
-            .padding(.bottom, 18)
         }
-        .frame(width: 296)
-        .background(NookChromeBackground())
+        .frame(width: NookMetrics.inspectorWidth)
+        .frame(maxHeight: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: NookRadius.surface, style: .continuous)
+                .fill(NookColor.paper)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: NookRadius.surface, style: .continuous)
+                .stroke(NookColor.border, lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.04), radius: 16, x: 0, y: 8)
+    }
+
+    private var header: some View {
+        HStack(spacing: 8) {
+            Text("Inspector")
+                .font(NookType.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(NookColor.textPrimary)
+            Spacer(minLength: 8)
+            Button {
+                model.toggleInspector()
+            } label: {
+                Image(systemName: "sidebar.right")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .buttonStyle(NookIconButtonStyle())
+            .help("Hide inspector (⌥⌘I)")
+            .accessibilityLabel("Hide inspector")
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 44)
     }
 
     private var hostLabel: String {
@@ -40,132 +83,122 @@ struct InspectorPane: View {
             ?? model.llmConfiguration.baseURLString
     }
 
-    private var sectionDivider: some View {
-        NookHairline()
-            .padding(.vertical, 18)
-    }
-
     private var phrasingSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            NookSectionLabel(title: "Phrasing", accessory: "At start")
-
-            if model.llmConfiguration.isComplete {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(model.llmConfiguration.model)
-                        .font(.system(size: 9.5, weight: .regular, design: .monospaced))
-                        .foregroundStyle(NookColor.textSecondary)
-                        .lineLimit(1)
-                    Text(hostLabel)
-                        .font(.system(size: 9, weight: .regular, design: .monospaced))
-                        .foregroundStyle(NookColor.textTertiary)
-                        .lineLimit(1)
+        InspectorSection(
+            title: "Phrasing",
+            accessory: "At start",
+            id: "phrasing",
+            state: state
+        ) {
+            VStack(alignment: .leading, spacing: 8) {
+                if model.llmConfiguration.isComplete {
+                    HStack(spacing: 6) {
+                        Text(model.llmConfiguration.model)
+                        Text("·")
+                        Text(hostLabel)
+                    }
+                    .font(NookType.mono(9, weight: .regular))
+                    .foregroundStyle(NookColor.textTertiary)
+                    .lineLimit(1)
                 }
-            }
 
-            Text(
-                model.canUseAI
-                    ? "Line breaks and pauses are planned by AI at Start."
-                    : "Local line breaker. Configure AI to phrase at Start."
-            )
-                .font(.system(size: 11.5, weight: .regular))
+                Text(
+                    model.canUseAI
+                        ? "AI plans the line breaks and pauses at Start. Your text is never rewritten."
+                        : "Local line breaker. Configure AI to phrase at Start."
+                )
+                .font(NookType.micro)
                 .foregroundStyle(NookColor.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
 
-            Button("Configure AI") {
-                model.openAISettings()
+                Button("Configure AI") {
+                    model.openAISettings()
+                }
+                .buttonStyle(NookSecondaryButtonStyle())
+                .help("Configure the OpenAI-compatible endpoint")
             }
-            .buttonStyle(NookSecondaryButtonStyle())
-            .help("Configure the OpenAI-compatible endpoint")
         }
     }
 
     private var paceSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            NookSectionLabel(title: "Pace", accessory: "Words per minute")
-
-            HStack(spacing: 6) {
-                ForEach(pacePresets) { preset in
-                    paceButton(preset)
-                }
-            }
-
-            HStack(spacing: 10) {
-                Slider(
-                    value: Binding(
-                        get: { model.wordsPerMinute },
-                        set: { model.setSpeed($0) }
-                    ),
-                    in: 90...200,
-                    step: 1
-                )
-                .tint(NookColor.accent)
-                .accessibilityLabel("Reading speed")
-                .accessibilityValue("\(Int(model.wordsPerMinute.rounded())) words per minute")
-
-                Text("\(Int(model.wordsPerMinute.rounded()))")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(NookColor.textPrimary)
-                    .frame(width: 30, alignment: .trailing)
-            }
-
-            Text("Natural English reading pace is the default.")
-                .font(.system(size: 10.5, weight: .regular))
-                .foregroundStyle(NookColor.textTertiary)
-        }
-    }
-
-    private func paceButton(_ preset: PacePreset) -> some View {
-        let selected = Int(model.wordsPerMinute.rounded()) == preset.wpm
-        return Button {
-            model.setSpeed(Double(preset.wpm))
-        } label: {
-            Text(preset.title)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(selected ? NookColor.textPrimary : NookColor.textSecondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 25)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(selected ? NookColor.accentSoft : Color.clear)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(
-                            selected ? NookColor.accent.opacity(0.48) : NookColor.border,
-                            lineWidth: 0.8
+        InspectorSection(
+            title: "Pace",
+            accessory: "Words per minute",
+            id: "pace",
+            state: state
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                PaceSegmentedControl(
+                    presets: pacePresets.map {
+                        PaceSegmentedControl.Preset(
+                            id: $0.id,
+                            title: $0.title,
+                            wordsPerMinute: $0.wpm
                         )
-                )
+                    },
+                    selectedWordsPerMinute: model.wordsPerMinute
+                ) { wpm in
+                    model.setSpeed(Double(wpm))
+                }
+
+                HStack(spacing: 10) {
+                    Slider(
+                        value: Binding(
+                            get: { model.wordsPerMinute },
+                            set: { model.setSpeed($0) }
+                        ),
+                        in: 90...200,
+                        step: 1
+                    )
+                    .tint(NookColor.accent)
+                    .accessibilityLabel("Reading speed")
+                    .accessibilityValue("\(Int(model.wordsPerMinute.rounded())) words per minute")
+
+                    Text("\(Int(model.wordsPerMinute.rounded()))")
+                        .font(NookType.mono(10.5))
+                        .foregroundStyle(NookColor.textPrimary)
+                        .frame(width: 26, alignment: .trailing)
+                        .contentTransition(.numericText())
+                }
+
+                Text("Natural English reading pace is the default.")
+                    .font(NookType.micro)
+                    .foregroundStyle(NookColor.textTertiary)
+            }
         }
-        .buttonStyle(.plain)
-        .help("Set \(preset.wpm) words per minute")
     }
 
     private var appearanceSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            NookSectionLabel(title: "Appearance", accessory: "Notch stage")
+        InspectorSection(
+            title: "Appearance",
+            accessory: "Notch stage",
+            id: "appearance",
+            state: state
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                sliderRow(
+                    title: "Type size",
+                    value: "\(Int(model.fontSize.rounded()))",
+                    binding: Binding(
+                        get: { model.fontSize },
+                        set: { model.fontSize = min(38, max(24, $0.rounded())) }
+                    ),
+                    range: 24...38,
+                    step: 1
+                )
 
-            sliderRow(
-                title: "Type size",
-                value: "\(Int(model.fontSize.rounded()))",
-                binding: Binding(
-                    get: { model.fontSize },
-                    set: { model.fontSize = min(38, max(24, $0.rounded())) }
-                ),
-                range: 24...38,
-                step: 1
-            )
-
-            sliderRow(
-                title: "Panel width",
-                value: "\(Int(model.cardWidth.rounded()))",
-                binding: Binding(
-                    get: { model.cardWidth },
-                    set: { model.cardWidth = min(860, max(600, ($0 / 10).rounded() * 10)) }
-                ),
-                range: 600...860,
-                step: 10
-            )
+                sliderRow(
+                    title: "Panel width",
+                    value: "\(Int(model.cardWidth.rounded()))",
+                    binding: Binding(
+                        get: { model.cardWidth },
+                        set: { model.cardWidth = min(860, max(600, ($0 / 10).rounded() * 10)) }
+                    ),
+                    range: 600...860,
+                    step: 10
+                )
+            }
         }
     }
 
@@ -176,16 +209,17 @@ struct InspectorPane: View {
         range: ClosedRange<Double>,
         step: Double
     ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             HStack {
                 Text(title)
-                    .font(.system(size: 11, weight: .regular))
+                    .font(NookType.micro)
                     .foregroundStyle(NookColor.textSecondary)
                 Spacer()
                 Text(value)
-                    .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+                    .font(NookType.mono(9.5))
                     .foregroundStyle(NookColor.textPrimary)
-                    .frame(minWidth: 28, alignment: .trailing)
+                    .frame(minWidth: 26, alignment: .trailing)
+                    .contentTransition(.numericText())
             }
             Slider(value: binding, in: range, step: step)
                 .tint(NookColor.accent)
@@ -195,33 +229,83 @@ struct InspectorPane: View {
     }
 
     private var privacySection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            NookSectionLabel(title: "Privacy", accessory: "Screen sharing")
-
-            HStack(alignment: .top, spacing: 10) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Hide from screen sharing")
-                        .font(.system(size: 11.5, weight: .medium))
-                        .foregroundStyle(NookColor.textPrimary.opacity(0.88))
-                    Text("The notch panel stays invisible to captures while this is on.")
-                        .font(.system(size: 10.5, weight: .regular))
-                        .foregroundStyle(NookColor.textTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(2)
-                }
-                Spacer(minLength: 0)
-                Toggle(
-                    "",
-                    isOn: Binding(
-                        get: { model.hideFromCapture },
-                        set: { model.hideFromCapture = $0 }
+        InspectorSection(
+            title: "Privacy",
+            accessory: "Screen sharing",
+            id: "privacy",
+            state: state
+        ) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Best-effort capture hiding")
+                            .font(NookType.micro)
+                            .fontWeight(.medium)
+                            .foregroundStyle(NookColor.textPrimary.opacity(0.9))
+                        Text("Asks capture tools to skip the panel. Some meeting apps ignore this.")
+                            .font(NookType.micro)
+                            .foregroundStyle(NookColor.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .lineSpacing(2)
+                    }
+                    Spacer(minLength: 0)
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { model.hideFromCapture },
+                            set: { model.hideFromCapture = $0 }
+                        )
                     )
-                )
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .tint(NookColor.accent)
-                .controlSize(.small)
-                .accessibilityLabel("Hide from screen sharing")
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .tint(NookColor.accent)
+                    .controlSize(.small)
+                    .accessibilityLabel("Best-effort capture hiding")
+                }
+            }
+        }
+    }
+}
+
+struct InspectorSection<Content: View>: View {
+    let title: String
+    let accessory: String?
+    let id: String
+    @ObservedObject var state: InspectorState
+    @ViewBuilder var content: Content
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var isExpanded: Bool {
+        state.expanded.contains(id)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(
+                    NookMotion.resolved(NookMotion.inspector, reduceMotion: reduceMotion)
+                ) {
+                    state.toggle(id)
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    NookSectionLabel(title: title, accessory: accessory)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(NookColor.textTertiary)
+                        .rotationEffect(.degrees(isExpanded ? 0 : -90))
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(title)
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+
+            if isExpanded {
+                content
+                    .padding(.top, 10)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }

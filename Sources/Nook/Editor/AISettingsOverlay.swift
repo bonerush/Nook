@@ -8,6 +8,7 @@ struct AISettingsOverlay: View {
     let onClose: () -> Void
 
     @ObservedObject private var state = OverlayState()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -22,7 +23,11 @@ struct AISettingsOverlay: View {
                 .offset(y: state.appeared ? 0 : 8)
         }
         .onAppear {
-            withAnimation(NookMotion.entrance) { state.appeared = true }
+            withAnimation(
+                NookMotion.resolved(NookMotion.entrance, reduceMotion: reduceMotion)
+            ) {
+                state.appeared = true
+            }
         }
         .onExitCommand(perform: onClose)
     }
@@ -31,18 +36,15 @@ struct AISettingsOverlay: View {
         VStack(alignment: .leading, spacing: 0) {
             header
             NookHairline()
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 18) {
-                    providerSection
-                    endpointSection
-                    keySection
-                    reasoningSection
-                    connectionStatus
-                }
-                .padding(.horizontal, 22)
-                .padding(.vertical, 20)
+            VStack(alignment: .leading, spacing: 18) {
+                providerSection
+                endpointSection
+                keySection
+                reasoningSection
+                connectionStatus
             }
-            .frame(maxHeight: 470)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 20)
 
             footer
         }

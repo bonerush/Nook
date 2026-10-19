@@ -130,6 +130,7 @@ struct NookKeycap: View {
 /// and a small brightness drop, both on the system snappy spring.
 struct NookPrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -142,14 +143,18 @@ struct NookPrimaryButtonStyle: ButtonStyle {
                     .fill(configuration.isPressed ? NookColor.accentPressed : NookColor.accentButton)
             )
             .brightness(configuration.isPressed ? -0.03 : 0)
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.985 : 1)
             .opacity(isEnabled ? 1 : 0.5)
-            .animation(NookMotion.press, value: configuration.isPressed)
+            .animation(
+                NookMotion.resolved(NookMotion.press, reduceMotion: reduceMotion),
+                value: configuration.isPressed
+            )
     }
 }
 
 struct NookSecondaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -165,9 +170,12 @@ struct NookSecondaryButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: NookRadius.control, style: .continuous)
                     .stroke(NookColor.border, lineWidth: 0.5)
             )
-            .scaleEffect(configuration.isPressed ? 0.99 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.99 : 1)
             .opacity(isEnabled ? 1 : 0.5)
-            .animation(NookMotion.press, value: configuration.isPressed)
+            .animation(
+                NookMotion.resolved(NookMotion.press, reduceMotion: reduceMotion),
+                value: configuration.isPressed
+            )
     }
 }
 

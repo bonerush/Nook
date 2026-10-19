@@ -70,6 +70,40 @@ final class PreviewHarness {
 
         guard isPreviewSample else { return }
 
+        if CommandLine.arguments.contains("--preview-motion") {
+            let steps: [(Double, @MainActor @Sendable () -> Void)] = [
+                (0.9, { model.toggleInspector() }),
+                (1.9, { model.toggleInspector() }),
+                (2.9, { model.loadSample() }),
+                (3.9, { model.toggleInspector() }),
+                (4.7, { model.toggleInspector() })
+            ]
+            for (delay, action) in steps {
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    action()
+                }
+            }
+        }
+
+        if CommandLine.arguments.contains("--preview-start") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                editor.start()
+            }
+        }
+
+        if CommandLine.arguments.contains("--preview-empty") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                model.clearScript()
+            }
+        }
+
+        if CommandLine.arguments.contains("--preview-no-inspector") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                model.isInspectorVisible = false
+            }
+        }
+
         if CommandLine.arguments.contains("--preview-ai-settings") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
                 model.openAISettings()

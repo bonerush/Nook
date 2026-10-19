@@ -11,6 +11,7 @@ final class EditorCoordinator {
 
     private var editorController: EditorWindowController?
     private var previousApp: NSRunningApplication?
+    private var hideGeneration = 0
     private var workspaceObserver: NSObjectProtocol?
 
     init(model: AppModel, engine: PlaybackEngine, panel: TeleprompterController) {
@@ -38,6 +39,8 @@ final class EditorCoordinator {
     // MARK: Window
 
     func openEditor() {
+        hideGeneration += 1
+        editorController?.window?.alphaValue = 1
         capturePreviousApplication()
         if panel.isPresented {
             panel.hide(animated: true, pause: true)
@@ -56,6 +59,8 @@ final class EditorCoordinator {
     }
 
     func hideEditor(animated: Bool = false) {
+        hideGeneration += 1
+        let generation = hideGeneration
         guard let window = editorController?.window else { return }
         guard animated else {
             window.orderOut(nil)
@@ -67,6 +72,7 @@ final class EditorCoordinator {
             window.animator().alphaValue = 0
         } completionHandler: {
             MainActor.assumeIsolated {
+                guard generation == self.hideGeneration else { return }
                 window.orderOut(nil)
                 window.alphaValue = 1
             }

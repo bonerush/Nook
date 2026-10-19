@@ -4,6 +4,9 @@ struct EditorView: View {
     @ObservedObject var model: AppModel
     let actions: EditorActions
 
+    @ObservedObject private var entrance = EntranceState()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var isPlanning: Bool {
         if case .planning = model.planningState { return true }
         return false
@@ -19,29 +22,43 @@ struct EditorView: View {
             NookCanvasBackground()
 
             VStack(spacing: 0) {
-                EditorTopBar(model: model, actions: actions)
+                EditorToolbar(model: model, actions: actions)
 
-                if isPlanning {
-                    Rectangle()
-                        .fill(NookColor.accent)
-                        .frame(height: 1)
-                } else {
-                    NookHairline()
-                }
+                HStack(alignment: .top, spacing: 20) {
+                    ScriptPaper(model: model)
+                        .frame(maxWidth: NookMetrics.paperMaxWidth)
+                        .frame(maxWidth: .infinity, alignment: .center)
 
-                HStack(spacing: 0) {
-                    ScriptPane(model: model)
-                    NookHairline().frame(width: 1)
-                    InspectorPane(model: model)
+                    if model.isInspectorVisible {
+                        InspectorPane(model: model)
+                            .transition(
+                                .asymmetric(
+                                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                                    removal: .opacity
+                                )
+                            )
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 10)
                 .frame(maxHeight: .infinity)
 
                 if hasPlanningError {
                     PlanningErrorBanner(model: model, actions: actions)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                NookHairline()
                 EditorStatusBar(model: model)
+            }
+            .opacity(entrance.visible ? 1 : 0)
+            .offset(y: entrance.visible || reduceMotion ? 0 : 8)
+            .onAppear {
+                withAnimation(
+                    NookMotion.resolved(NookMotion.entrance, reduceMotion: reduceMotion)
+                ) {
+                    entrance.visible = true
+                }
             }
             .allowsHitTesting(!model.isAISettingsPresented)
 
@@ -52,9 +69,13 @@ struct EditorView: View {
                 .zIndex(10)
             }
         }
-        .frame(minWidth: 960, minHeight: 680)
+        .frame(minWidth: NookMetrics.windowMin.width, minHeight: NookMetrics.windowMin.height)
         .ignoresSafeArea(.container, edges: .top)
         .preferredColorScheme(.light)
+        .animation(
+            NookMotion.resolved(NookMotion.inspector, reduceMotion: reduceMotion),
+            value: model.isInspectorVisible
+        )
         .onExitCommand {
             if model.isAISettingsPresented {
                 model.closeAISettings()

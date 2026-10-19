@@ -80,6 +80,7 @@ final class AISettingsModel: ObservableObject {
     // MARK: Sheet lifecycle
 
     func open() {
+        testTask?.cancel()
         baseURLDraft = configuration.baseURLString
         modelDraft = configuration.model
         presetDraft = configuration.preset
@@ -92,6 +93,7 @@ final class AISettingsModel: ObservableObject {
     }
 
     func close() {
+        testTask?.cancel()
         keyDraft = ""
         errorMessage = nil
         testState = .idle

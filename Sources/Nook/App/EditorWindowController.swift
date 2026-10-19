@@ -18,19 +18,20 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         window.title = "Nook"
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
         window.tabbingMode = .disallowed
         window.backgroundColor = NSColor(
-            calibratedRed: 1.0,
-            green: 1.0,
-            blue: 1.0,
+            calibratedRed: 0xF5 / 255.0,
+            green: 0xF5 / 255.0,
+            blue: 0xF7 / 255.0,
             alpha: 1
         )
         window.appearance = NSAppearance(named: .aqua)
-        window.minSize = NSSize(width: 960, height: 680)
-        window.contentMinSize = NSSize(width: 960, height: 680)
-        window.setContentSize(NSSize(width: 1040, height: 720))
+        window.minSize = NookMetrics.windowMin
+        window.contentMinSize = NookMetrics.windowMin
+        window.setContentSize(NookMetrics.windowDefault)
         window.center()
 
         super.init(window: window)
@@ -41,7 +42,9 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             .sink { [weak self] presented in
                 guard !presented else { return }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
-                    self?.focusScriptEditor()
+                    MainActor.assumeIsolated {
+                        self?.focusScriptEditor()
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -66,7 +69,9 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         // The SwiftUI TextEditor is backed by an NSTextView. Focus it after the
         // first layout pass so the writer can start typing immediately.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) { [weak self] in
-            self?.focusScriptEditor()
+            MainActor.assumeIsolated {
+                self?.focusScriptEditor()
+            }
         }
     }
 

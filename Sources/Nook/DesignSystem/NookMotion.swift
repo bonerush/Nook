@@ -20,40 +20,6 @@ enum NookMotion {
     }
 }
 
-/// A small view that fades and lifts its content on first appearance. It uses
-/// an ObservableObject so the app never needs @State or other macro wrappers.
-struct NookEntrance<Content: View>: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let delay: Double
-    let offset: CGFloat
-    @ViewBuilder var content: Content
-
-    @ObservedObject private var state = EntranceState()
-
-    init(delay: Double = 0, offset: CGFloat = 12, @ViewBuilder content: () -> Content) {
-        self.delay = delay
-        self.offset = offset
-        self.content = content()
-    }
-
-    var body: some View {
-        content
-            .opacity(state.visible ? 1 : 0)
-            .offset(y: state.visible || reduceMotion ? 0 : offset)
-            .onAppear {
-                state.visible = false
-                withAnimation(
-                    NookMotion.resolved(
-                        NookMotion.entrance.delay(delay),
-                        reduceMotion: reduceMotion
-                    )
-                ) {
-                    state.visible = true
-                }
-            }
-    }
-}
-
 final class EntranceState: ObservableObject {
     @Published var visible = false
 }
