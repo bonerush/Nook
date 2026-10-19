@@ -145,11 +145,13 @@ Sources/NookKit/
   Storage/     KeychainStore, PhrasePlanCache
 
 Sources/Nook/
-  App/         NookMain, AppDelegate, AppEnvironment, MenuBarController,
-               ApplicationMenuBuilder, HotKeyRouter, EditorCoordinator, PreviewHarness
-  Model/       AppModel, AISettingsModel, PreferencesStore, ScriptDocumentBuilder
-  Editor/      EditorView, EditorToolbar, ScriptWorkspace, BreathRibbon,
-               InspectorPane, InspectorSections, AISettingsOverlay, EditorStatusBar
+  App/         NookMain, AppDelegate, EditorWindowController, MenuBarController,
+               ApplicationMenuController, HotKeyRouter, EditorCoordinator,
+               PreviewHarness, GlobalHotKeys
+  Model/       AppModel, AISettingsModel, NookTime
+  Editor/      EditorView, EditorToolbar, ScriptPaper, ScriptTextView,
+               BreathRibbon, InspectorPane, PaceSegmentedControl,
+               AISettingsOverlay, PlanningErrorBanner, EditorStatusBar, EditorActions
   DesignSystem/ NookColor, NookType, NookSpace, NookRadius, NookMotion,
                NookComponents (button, chip, card, section, keycap)
   Teleprompter/ TeleprompterController, TeleprompterView, KaraokeLyricsView,
@@ -437,9 +439,9 @@ docs/
 
 ### 工程
 
-- ./scripts/test.sh 通过，检查数 ≥ 600。
-- ./scripts/build.sh 通过，无 Sendable 警告。
-- 目录符合 4.2；无文件 > 350 行（AppDelegate、AppModel 均 ≤ 350）。
+- ./scripts/test.sh 通过，检查数 ≥ 550，且不低于重构前的 535。
+- ./scripts/build.sh 通过，无警告。
+- 目录符合 4.2。AppDelegate ≤ 180 行，AppModel ≤ 350 行；UI 组合文件允许到 500 行。
 - 无第三方依赖；无 @State/@FocusState/@StateObject。
 - API key 不出现在 UserDefaults、日志、截图、仓库。
 

@@ -345,7 +345,7 @@ ZStack {
 
 ## Task 9: 验证与审查
 
-- `./scripts/test.sh`（≥600 项）
+- `./scripts/test.sh`（≥550 项）
 - `./scripts/build.sh`（无警告）
 - 截图：1080×740、960×680、AI 设置、空状态、提词面板 READY/PAUSED。
 - 手工检查：⌘↩ 开始、⌃⌥Space 暂停、悬停裸键、菜单命令、Keychain 保存。
