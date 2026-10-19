@@ -110,6 +110,8 @@ final class AISettingsModel: ObservableObject {
     /// endpoint that needs no key.
     @discardableResult
     func save() -> Bool {
+        testTask?.cancel()
+        testGeneration += 1
         let next = LLMConfiguration(
             preset: presetDraft,
             baseURLString: baseURLDraft,
@@ -151,6 +153,8 @@ final class AISettingsModel: ObservableObject {
     }
 
     func clearKey() {
+        testTask?.cancel()
+        testGeneration += 1
         do {
             try keychain.delete()
             let remaining = try keychain.read()

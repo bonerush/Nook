@@ -12,6 +12,7 @@
 | `./scripts/test.sh` | 编译并运行 558 项检查 |
 | `./scripts/run.sh` | 构建后启动 |
 | `./scripts/check-docs.py` | 检查文档规则 |
+| `./scripts/benchmark.sh` | 测量预览模式的 CPU 与内存 |
 
 ## 构建过程
 

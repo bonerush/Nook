@@ -110,3 +110,56 @@
 - `Sources/NookKit/Providers/OpenAICompatibleClient.swift`
 - `Sources/Nook/App/AppDelegate.swift` / `EditorCoordinator.swift` / `HotKeyRouter.swift`
 - `Tests/NookKitTests/`
+
+## Scoped re-review — 2026-10-19（HEAD a4df8d2）
+
+结论：pass-with-notes
+
+范围：仅复验上次报告中的 B1、N1、N2、N3、N4；没有重做完整 diff 审查。
+
+### 复验结果（5 项全部通过）
+
+| 项 | 结果 | 证据 |
+| --- | --- | --- |
+| B1 AI 设置面板消失/锁编辑器 | 通过 | 内部入场状态已移除；AppModel 更新不影响面板可见性；预览实测通过 |
+| N1 Inspector 折叠状态 | 通过（AppModel 更新维度） | InspectorState 已提升到 EditorView 根并注入 |
+| N2 菜单栏屏幕共享文案 | 通过 | `MenuBarController.swift:89` = 「屏幕共享时尽力隐藏」 |
+| N3 密钥文案 | 通过 | `AISettingsOverlay.swift:206` 已改为准确说明 |
+| N4 testConnection generation | 通过（关闭/重开、连续 Test） | generation 自增 + success/catch 双守卫 |
+
+**B1 细节**
+
+- `AISettingsOverlay` 已删除内联 `@ObservedObject OverlayState`、`onAppear` 和 opacity/scale 入场状态（当前 `AISettingsOverlay.swift:6-17`）；入场由 `EditorView` 的条件插入 `.transition(.opacity.combined(with: .scale(scale: 0.985)))` 与 `.animation(..., value: model.isAISettingsPresented)` 驱动（`EditorView.swift:63-83`）。面板在 `isAISettingsPresented == true` 期间没有会被 AppModel 更新重置的内部状态。
+- 真实 UI 验证：运行 `./dist/Nook.app/Contents/MacOS/Nook --preview-sample --preview-settings-update`（该 flag 在打开设置后 0.5 s 调用 `model.adjustSpeed(by: 5)`）。`/tmp/nook-final-settings-after-wpm.png` 显示设置卡片仍完整可见；状态栏与 Inspector 同时显示 143 WPM（138+5），证明 AppModel 更新已发生。编辑器在面板打开时仍被 dim 并阻止点击，这是模态的预期行为；面板可见，不再出现“面板不可见但编辑区被锁死”。
+- 代码路径上未发现其他 AppModel 更新会隐藏该面板。
+
+**N1 细节**
+
+- `EditorView` 根持有 `@ObservedObject private var inspectorState = InspectorState()`，并调用 `InspectorPane(model: model, state: inspectorState)`（`EditorView.swift:7-8,34`）；`InspectorPane` 改为 `@ObservedObject var state: InspectorState`（`InspectorPane.swift:15-19`），不再在子视图内部创建。AppModel 更新只重算 EditorView.body，根上的 state 引用不变，折叠状态保留。
+
+**N2 / N3 细节**
+
+- `MenuBarController.swift:89`：`屏幕共享时尽力隐藏`。
+- `AISettingsOverlay.swift:206`：`Stored in Keychain. Read only to sign requests to this endpoint.`。与“只在 Keychain 持久化、Start 时读出并作为 Bearer 请求头发给 endpoint”的实现一致。
+
+**N4 细节**
+
+- `AISettingsModel` 新增 `testGeneration`；`open()`、`close()`、`testConnection()` 均自增；success 与 catch 在写入 `testState` 前都检查 `generation == testGeneration`（`AISettingsModel.swift:49,85,98,198-218`）。上次报告的“关闭重开 / 连续点 Test 被旧结果覆盖”路径已修复。
+
+### 质量门（a4df8d2 实测）
+
+- `./scripts/build.sh`：exit 0，0 warning（log: `/tmp/nook-final-build.log`，“Built .../dist/Nook.app”）。
+- `./scripts/test.sh`：exit 0，PASS — 558 checks（log: `/tmp/nook-final-test.log`）。
+- HEAD 为 `a4df8d2`；审查未修改 Sources/Tests。结束时工作树有无关改动 `M docs/05-design-system.md` 与 `?? scripts/benchmark.sh`（其他 agent 的并行工作，不属于本次复验）。
+
+### Non-blocking（3 条）
+
+1. `AISettingsModel.save()` 没有 cancel 或自增 `testGeneration`；如果在 “Test connection” 请求进行中点击 Save，`save()` 会把 `testState` 置为 idle，但旧请求完成后仍可能写入 success/failure。只影响这个窄窗口；建议 save() 也取消 testTask 并 bump generation。
+2. 自动测试未覆盖本次 N4 修复：Tests 中没有 AISettingsModel / testConnection 的纯逻辑检查（558 checks 与上次相同）。当前结论来自代码审查 + 预览 flag；建议补一条 generation 回归测试。
+3. 上次报告的 N5（`AIPlanningCoordinator.prepare` 在 `AppModel` 的 MainActor Task 中同步执行 `cache.load/save`）不在本次 5 项修复范围内，代码未变；本次未复测其性能影响。
+
+### 本次限制
+
+- Inspector 折叠状态跨 AppModel 更新已确认；但 `EditorCoordinator.discardEditorWindow()` 在开始提词后释放编辑器窗口，重新打开会新建 EditorView 根，折叠状态会重置。这不是 AppModel 更新导致；如果需要跨窗口保持，可后续持久化。
+- 未做真实 Keychain 写入/删除的 UI 操作；Keychain 路径按 `KeychainStore`（未变）静态核对。
+- 预览实测只覆盖 WPM 更新这一种 AppModel 变更；其他更新路径由“overlay 无内部状态”的代码结构保证。
