@@ -44,7 +44,7 @@ final class ApplicationMenuController: NSObject {
         )
         appMenu.addItem(
             item(
-                "打开编辑器",
+                "打开编辑窗口",
                 action: #selector(openEditor),
                 key: "e",
                 modifiers: [.command]

@@ -88,8 +88,8 @@ EditorCoordinator 会按需创建 EditorWindowController。
 
 ![开始提词的时序](assets/start-sequence.png)
 
-1. 用户按 ⌘↩。
-2. EditorToolbar 调用 EditorActions.start。
+1. 用户按 ⌘↩，或点击 Start。
+2. 菜单命令或工具栏调用 EditorCoordinator.start。
 3. EditorCoordinator 请求 AppModel.prepareForStart。
 4. AppModel 读取 Keychain 中的密钥。
 5. 有密钥时进入 AIPlanningCoordinator。

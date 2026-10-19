@@ -163,13 +163,14 @@ struct AISettingsOverlay: View {
                 }
             }
 
-            HStack(spacing: 6) {
+            ZStack(alignment: .trailing) {
                 ZStack(alignment: .leading) {
                     if settings.keyDraft.isEmpty {
                         Text("Paste a key to add or replace")
                             .font(NookType.mono(11.5, weight: .regular))
                             .foregroundStyle(NookColor.textTertiary)
-                            .padding(.horizontal, 10)
+                            .padding(.leading, 10)
+                            .padding(.trailing, 36)
                             .allowsHitTesting(false)
                     }
 
@@ -183,7 +184,8 @@ struct AISettingsOverlay: View {
                     .textFieldStyle(.plain)
                     .font(NookType.mono(11.5, weight: .regular))
                     .foregroundStyle(NookColor.textPrimary)
-                    .padding(.horizontal, 10)
+                    .padding(.leading, 10)
+                    .padding(.trailing, 36)
                     .accessibilityLabel("API key")
                 }
                 .frame(height: 36)
@@ -196,9 +198,10 @@ struct AISettingsOverlay: View {
                     Image(systemName: settings.isKeyVisible ? "eye.slash" : "eye")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(NookColor.textSecondary)
-                        .frame(width: 32, height: 36)
+                        .frame(width: 30, height: 36)
                 }
                 .buttonStyle(.plain)
+                .padding(.trailing, 3)
                 .help(settings.isKeyVisible ? "Hide API key" : "Reveal API key")
                 .accessibilityLabel(settings.isKeyVisible ? "Hide API key" : "Reveal API key")
             }

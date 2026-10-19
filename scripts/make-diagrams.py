@@ -188,7 +188,7 @@ def data_flow() -> Diagram:
 def start_sequence() -> Diagram:
     d = Diagram("start-sequence", 1280, 640)
     d.node("一次 Start 的调用顺序", 40, 20, 500, 40, TITLE)
-    lanes = [("用户", 110), ("编辑器", 330), ("协调器", 570), ("AppModel", 810), ("提词面板", 1120)]
+    lanes = [("用户", 110), ("菜单 / 工具栏", 330), ("协调器", 570), ("AppModel", 810), ("提词面板", 1120)]
     for label, center in lanes:
         d.node(label, center - 85, 70, 170, 44, DARK if label == "AppModel" else BOX)
         d.node("", center - 1, 114, 2, 500, LIFELINE)
@@ -216,7 +216,7 @@ def start_sequence() -> Diagram:
             "text;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#515154;",
         )
 
-    message(110, 330, 170, "按 ⌘↩")
+    message(110, 330, 170, "⌘↩ / Start")
     message(330, 570, 220, "start()")
     message(570, 810, 270, "prepareForStart")
     d.node(

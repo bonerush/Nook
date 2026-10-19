@@ -158,7 +158,14 @@ log stream --predicate 'process == "Nook"'
 3. 按空格。
 4. 点击窗口。
 
-截图保存到桌面。不要把真实讲稿放进截图。
+面板截图要先让面板出现：
+
+~~~bash
+NOOK_CAPTURE_VISIBLE=1 ./dist/Nook.app/Contents/MacOS/Nook --preview-sample --demo
+~~~
+
+截图保存到桌面。
+不要把真实讲稿放进截图。
 
 ## 发布
 

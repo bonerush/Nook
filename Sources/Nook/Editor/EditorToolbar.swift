@@ -87,7 +87,9 @@ struct EditorToolbar: View {
         } label: {
             HStack(spacing: 7) {
                 if isPlanning {
-                    NookPulseDot(color: .white, size: 7)
+                    Circle()
+                        .fill(.white.opacity(0.85))
+                        .frame(width: 7, height: 7)
                     Text("Phrasing…")
                 } else {
                     Image(systemName: "play.fill")

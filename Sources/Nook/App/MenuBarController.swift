@@ -63,7 +63,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         statusMenu.addItem(headerItem)
         statusMenu.addItem(.separator())
 
-        statusMenu.addItem(item("打开编辑器…", action: #selector(openEditorAction)))
+        statusMenu.addItem(item("打开编辑窗口…", action: #selector(openEditorAction)))
         statusMenu.addItem(.separator())
 
         playPauseItem = item("播放提词", action: #selector(togglePlaybackAction))
