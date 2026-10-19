@@ -130,8 +130,10 @@ final class TeleprompterController {
                 panel.animator().alphaValue = 1
                 panel.animator().setFrame(finalFrame, display: true)
             } completionHandler: { [weak self] in
-                guard let self, self.presentationGeneration == generation else { return }
-                self.panel.alphaValue = 1
+                MainActor.assumeIsolated {
+                    guard let self, self.presentationGeneration == generation else { return }
+                    self.panel.alphaValue = 1
+                }
             }
         } else {
             panel.orderFrontRegardless()
@@ -173,9 +175,11 @@ final class TeleprompterController {
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             panel.animator().alphaValue = 0
         } completionHandler: { [weak self] in
-            guard let self, self.presentationGeneration == generation, !self.isPresented else { return }
-            self.panel.orderOut(nil)
-            self.panel.alphaValue = 1
+            MainActor.assumeIsolated {
+                guard let self, self.presentationGeneration == generation, !self.isPresented else { return }
+                self.panel.orderOut(nil)
+                self.panel.alphaValue = 1
+            }
         }
     }
 
@@ -199,7 +203,9 @@ final class TeleprompterController {
         guard isPresented else { return }
         if hoverTimer != nil { return }
         let timer = Timer(timeInterval: 0.08, repeats: true) { [weak self] _ in
-            self?.updateHoverState()
+            MainActor.assumeIsolated {
+                self?.updateHoverState()
+            }
         }
         RunLoop.main.add(timer, forMode: .common)
         hoverTimer = timer
