@@ -32,7 +32,7 @@ struct InspectorPane: View {
             .padding(.bottom, 18)
         }
         .frame(width: 296)
-        .background(AppleChromeBackground())
+        .background(NookChromeBackground())
     }
 
     private var hostLabel: String {
@@ -41,13 +41,13 @@ struct InspectorPane: View {
     }
 
     private var sectionDivider: some View {
-        LinearHairline()
+        NookHairline()
             .padding(.vertical, 18)
     }
 
     private var phrasingSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            LinearSectionLabel(title: "Phrasing", accessory: "At start")
+            NookSectionLabel(title: "Phrasing", accessory: "At start")
 
             if model.llmConfiguration.isComplete {
                 VStack(alignment: .leading, spacing: 3) {
@@ -75,14 +75,14 @@ struct InspectorPane: View {
             Button("Configure AI") {
                 model.openAISettings()
             }
-            .buttonStyle(LinearSecondaryButtonStyle())
+            .buttonStyle(NookSecondaryButtonStyle())
             .help("Configure the OpenAI-compatible endpoint")
         }
     }
 
     private var paceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LinearSectionLabel(title: "Pace", accessory: "Words per minute")
+            NookSectionLabel(title: "Pace", accessory: "Words per minute")
 
             HStack(spacing: 6) {
                 ForEach(pacePresets) { preset in
@@ -143,7 +143,7 @@ struct InspectorPane: View {
 
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LinearSectionLabel(title: "Appearance", accessory: "Notch stage")
+            NookSectionLabel(title: "Appearance", accessory: "Notch stage")
 
             sliderRow(
                 title: "Type size",
@@ -196,7 +196,7 @@ struct InspectorPane: View {
 
     private var privacySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            LinearSectionLabel(title: "Privacy", accessory: "Screen sharing")
+            NookSectionLabel(title: "Privacy", accessory: "Screen sharing")
 
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 4) {

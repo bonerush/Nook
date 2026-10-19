@@ -166,6 +166,8 @@ runPhrasePlanningPromptTests()
 runOpenAICompatibleClientTests()
 runPhrasePlanCacheTests()
 runAIPlanningCoordinatorTests()
+runPreferencesStoreTests()
+runScriptDocumentBuilderTests()
 
 if failures.isEmpty {
     print("PASS — \(testCount) checks")

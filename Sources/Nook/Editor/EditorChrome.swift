@@ -81,7 +81,7 @@ struct EditorTopBar: View {
                     Image(systemName: "gearshape")
                         .font(.system(size: 11, weight: .medium))
                 }
-                .buttonStyle(LinearIconButtonStyle())
+                .buttonStyle(NookIconButtonStyle())
                 .help("AI settings")
                 .accessibilityLabel("AI settings")
 
@@ -106,7 +106,7 @@ struct EditorTopBar: View {
                     .fixedSize()
                     .padding(.trailing, 1)
                 }
-                .buttonStyle(LinearPrimaryButtonStyle())
+                .buttonStyle(NookPrimaryButtonStyle())
                 .disabled(!model.hasContent && !isPlanning)
                 .help(isPlanning ? "Cancel AI planning (Esc)" : "Start the teleprompter (⌘↩)")
             }
@@ -114,7 +114,7 @@ struct EditorTopBar: View {
         .padding(.leading, 80)
         .padding(.trailing, 24)
         .frame(height: 52)
-        .background(AppleChromeBackground())
+        .background(NookChromeBackground())
     }
 }
 
@@ -168,23 +168,23 @@ struct PlanningErrorBanner: View {
             Button("Retry AI") {
                 actions.retryAI()
             }
-            .buttonStyle(LinearSecondaryButtonStyle())
+            .buttonStyle(NookSecondaryButtonStyle())
 
             Button("Start locally") {
                 actions.startLocal()
             }
-            .buttonStyle(LinearSecondaryButtonStyle())
+            .buttonStyle(NookSecondaryButtonStyle())
 
             Button("Settings") {
                 actions.openAISettings()
             }
-            .buttonStyle(LinearSecondaryButtonStyle())
+            .buttonStyle(NookSecondaryButtonStyle())
         }
         .padding(.horizontal, 24)
         .frame(height: 42)
         .background(NookColor.danger.opacity(0.06))
-        .overlay(alignment: .top) { LinearHairline(color: NookColor.danger.opacity(0.16)) }
-        .overlay(alignment: .bottom) { LinearHairline(color: NookColor.danger.opacity(0.16)) }
+        .overlay(alignment: .top) { NookHairline(color: NookColor.danger.opacity(0.16)) }
+        .overlay(alignment: .bottom) { NookHairline(color: NookColor.danger.opacity(0.16)) }
     }
 }
 
@@ -203,7 +203,7 @@ struct EditorStatusBar: View {
 
             Spacer(minLength: 0)
 
-            LinearKeycap("⌃⌥Space")
+            NookKeycap("⌃⌥Space")
         }
         .padding(.horizontal, 24)
         .frame(height: 30)

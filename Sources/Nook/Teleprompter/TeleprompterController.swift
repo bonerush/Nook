@@ -8,6 +8,7 @@ final class NotchPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+@MainActor
 final class TeleprompterController {
     let engine: PlaybackEngine
     private let model: AppModel
@@ -227,7 +228,7 @@ final class TeleprompterController {
     }
 
     deinit {
-        stopHoverTracking()
+        hoverTimer?.invalidate()
     }
 
     // MARK: Geometry

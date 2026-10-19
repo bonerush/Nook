@@ -16,7 +16,7 @@ struct EditorView: View {
 
     var body: some View {
         ZStack {
-            LinearCanvasBackground()
+            NookCanvasBackground()
 
             VStack(spacing: 0) {
                 EditorTopBar(model: model, actions: actions)
@@ -26,12 +26,12 @@ struct EditorView: View {
                         .fill(NookColor.accent)
                         .frame(height: 1)
                 } else {
-                    LinearHairline()
+                    NookHairline()
                 }
 
                 HStack(spacing: 0) {
                     ScriptPane(model: model)
-                    LinearHairline().frame(width: 1)
+                    NookHairline().frame(width: 1)
                     InspectorPane(model: model)
                 }
                 .frame(maxHeight: .infinity)
@@ -40,13 +40,13 @@ struct EditorView: View {
                     PlanningErrorBanner(model: model, actions: actions)
                 }
 
-                LinearHairline()
+                NookHairline()
                 EditorStatusBar(model: model)
             }
             .allowsHitTesting(!model.isAISettingsPresented)
 
             if model.isAISettingsPresented {
-                AISettingsOverlay(model: model) {
+                AISettingsOverlay(settings: model.aiSettings) {
                     model.closeAISettings()
                 }
                 .zIndex(10)

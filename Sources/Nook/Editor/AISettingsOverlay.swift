@@ -1,109 +1,108 @@
 import AppKit
 import SwiftUI
 
+/// Settings for the OpenAI-compatible phrasing endpoint. It is a focused
+/// sheet, not a page: one endpoint, one key, one reasoning switch.
 struct AISettingsOverlay: View {
-    @ObservedObject var model: AppModel
+    @ObservedObject var settings: AISettingsModel
     let onClose: () -> Void
+
+    @ObservedObject private var state = OverlayState()
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.18)
+            Color.black.opacity(0.16)
                 .ignoresSafeArea()
                 .onTapGesture(perform: onClose)
+                .opacity(state.appeared ? 1 : 0)
 
-            VStack(alignment: .leading, spacing: 16) {
-                header
-                providerPresets
-                reasoningSection
+            card
+                .scaleEffect(state.appeared ? 1 : 0.985)
+                .opacity(state.appeared ? 1 : 0)
+                .offset(y: state.appeared ? 0 : 8)
+        }
+        .onAppear {
+            withAnimation(NookMotion.entrance) { state.appeared = true }
+        }
+        .onExitCommand(perform: onClose)
+    }
 
-                settingsField(
-                    title: "Base URL",
-                    placeholder: "https://your-endpoint/v1",
-                    text: $model.aiBaseURLDraft
-                )
-
-                settingsField(
-                    title: "Model",
-                    placeholder: "your model id",
-                    text: $model.aiModelDraft
-                )
-
-                keyField
-                connectionStatus
-
-                Text("At Start, your script is sent to this endpoint for phrasing. Nothing else leaves this Mac.")
-                    .font(.system(size: 10.5, weight: .regular))
-                    .foregroundStyle(NookColor.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(2)
-
-                if let error = model.aiSettingsError {
-                    Text(error)
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundStyle(NookColor.danger)
+    private var card: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+            NookHairline()
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 18) {
+                    providerSection
+                    endpointSection
+                    keySection
+                    reasoningSection
+                    connectionStatus
                 }
-
-                HStack(spacing: 8) {
-                    Button("Clear key") {
-                        model.clearAPIKey()
-                    }
-                    .buttonStyle(LinearSecondaryButtonStyle())
-                    .disabled(!model.hasAPIKey)
-
-                    Spacer(minLength: 8)
-
-                    Button("Test connection") {
-                        model.testConnection()
-                    }
-                    .buttonStyle(LinearSecondaryButtonStyle())
-                    .disabled(model.connectionTestState == .testing)
-
-                    Button("Cancel", action: onClose)
-                        .buttonStyle(LinearSecondaryButtonStyle())
-
-                    Button("Save") {
-                        model.saveAISettings()
-                    }
-                    .buttonStyle(LinearPrimaryButtonStyle())
-                    .keyboardShortcut(.defaultAction)
-                }
+                .padding(.horizontal, 22)
+                .padding(.vertical, 20)
             }
-            .padding(20)
-            .frame(width: 560)
-            .background(NookColor.raised)
-            .clipShape(RoundedRectangle(cornerRadius: NookRadius.overlay, style: .continuous))
-            .shadow(color: .black.opacity(0.12), radius: 28, y: 14)
-            .overlay(alignment: .topLeading) {
-                FirstSettingsFieldFocusBridge()
-                    .frame(width: 0, height: 0)
-            }
+            .frame(maxHeight: 470)
+
+            footer
+        }
+        .frame(width: 580)
+        .background(
+            RoundedRectangle(cornerRadius: NookRadius.overlay, style: .continuous)
+                .fill(NookColor.paper)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: NookRadius.overlay, style: .continuous)
+                .stroke(NookColor.border, lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.16), radius: 32, x: 0, y: 16)
+        .overlay(alignment: .topLeading) {
+            FirstSettingsFieldFocusBridge()
+                .frame(width: 0, height: 0)
         }
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 9) {
-            Text("AI phrasing")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(NookColor.textPrimary)
-            Text("OpenAI-compatible")
-                .font(.system(size: 10, weight: .regular))
-                .foregroundStyle(NookColor.textTertiary)
-            Spacer()
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(NookColor.accentSoft)
+                    .frame(width: 32, height: 32)
+                Image(systemName: "sparkles")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(NookColor.accent)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("AI phrasing")
+                    .font(NookType.title)
+                    .foregroundStyle(NookColor.textPrimary)
+                Text("OpenAI-compatible endpoint")
+                    .font(NookType.caption)
+                    .foregroundStyle(NookColor.textTertiary)
+            }
+
+            Spacer(minLength: 12)
+
+            if settings.canUseAI {
+                NookChip(text: "Ready", color: NookColor.success)
+            }
+
             Button(action: onClose) {
                 Image(systemName: "xmark")
                     .font(.system(size: 10, weight: .semibold))
             }
-            .buttonStyle(LinearIconButtonStyle())
+            .buttonStyle(NookIconButtonStyle())
             .help("Close AI settings")
+            .accessibilityLabel("Close AI settings")
         }
+        .padding(.horizontal, 22)
+        .frame(height: 64)
     }
 
-    private var providerPresets: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("Provider")
-                .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(NookColor.textSecondary)
-
+    private var providerSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            NookSectionLabel(title: "Provider")
             HStack(spacing: 6) {
                 ForEach(LLMProviderPreset.allCases, id: \.self) { preset in
                     presetButton(preset)
@@ -112,9 +111,120 @@ struct AISettingsOverlay: View {
         }
     }
 
+    private func presetButton(_ preset: LLMProviderPreset) -> some View {
+        let selected = settings.presetDraft == preset
+        return Button {
+            settings.presetDraft = preset
+            if !preset.defaultBaseURL.isEmpty {
+                settings.baseURLDraft = preset.defaultBaseURL
+            }
+        } label: {
+            Text(preset.displayName)
+                .font(.system(size: 10.5, weight: .medium))
+                .foregroundStyle(selected ? NookColor.accent : NookColor.textSecondary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(selected ? NookColor.accentSoft : NookColor.surfaceMuted)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(
+                            selected ? NookColor.accent.opacity(0.45) : Color.clear,
+                            lineWidth: 0.5
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(selected ? "Selected" : "Not selected")
+    }
+
+    private var endpointSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            NookSectionLabel(title: "Endpoint", accessory: "HTTPS only")
+
+            settingsField(
+                title: "Base URL",
+                placeholder: "https://your-endpoint/v1",
+                text: $settings.baseURLDraft
+            )
+
+            settingsField(
+                title: "Model",
+                placeholder: "your model id",
+                text: $settings.modelDraft
+            )
+        }
+    }
+
+    private var keySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                NookSectionLabel(title: "API key", accessory: "Keychain only")
+                Spacer(minLength: 8)
+                if settings.hasAPIKey {
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(NookColor.success)
+                        Text(settings.keySuffix.map { "•••• \($0)" } ?? "Saved")
+                            .font(NookType.mono(9, weight: .regular))
+                            .foregroundStyle(NookColor.textTertiary)
+                    }
+                }
+            }
+
+            HStack(spacing: 6) {
+                ZStack(alignment: .leading) {
+                    if settings.keyDraft.isEmpty {
+                        Text("Paste a key to add or replace")
+                            .font(NookType.mono(11.5, weight: .regular))
+                            .foregroundStyle(NookColor.textTertiary)
+                            .padding(.horizontal, 10)
+                            .allowsHitTesting(false)
+                    }
+
+                    Group {
+                        if settings.isKeyVisible {
+                            TextField("", text: $settings.keyDraft)
+                        } else {
+                            SecureField("", text: $settings.keyDraft)
+                        }
+                    }
+                    .textFieldStyle(.plain)
+                    .font(NookType.mono(11.5, weight: .regular))
+                    .foregroundStyle(NookColor.textPrimary)
+                    .padding(.horizontal, 10)
+                    .accessibilityLabel("API key")
+                }
+                .frame(height: 36)
+                .background(fieldBackground)
+                .overlay(fieldBorder)
+
+                Button {
+                    settings.isKeyVisible.toggle()
+                } label: {
+                    Image(systemName: settings.isKeyVisible ? "eye.slash" : "eye")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(NookColor.textSecondary)
+                        .frame(width: 32, height: 36)
+                }
+                .buttonStyle(.plain)
+                .help(settings.isKeyVisible ? "Hide API key" : "Reveal API key")
+                .accessibilityLabel(settings.isKeyVisible ? "Hide API key" : "Reveal API key")
+            }
+
+            Text("At Start, Nook sends tokens and budget fields to this endpoint. The key never leaves Keychain.")
+                .font(NookType.micro)
+                .foregroundStyle(NookColor.textTertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var supportsReasoningDraft: Bool {
-        if model.aiPresetDraft == .deepSeek { return true }
-        guard let host = URL(string: model.aiBaseURLDraft)?.host?.lowercased() else {
+        if settings.presetDraft == .deepSeek { return true }
+        guard let host = URL(string: settings.baseURLDraft)?.host?.lowercased() else {
             return false
         }
         return host.contains("deepseek.com")
@@ -123,11 +233,11 @@ struct AISettingsOverlay: View {
     @ViewBuilder
     private var reasoningSection: some View {
         if supportsReasoningDraft {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .center, spacing: 8) {
-                    LinearSectionLabel(title: "Reasoning", accessory: "Thinking mode")
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    NookSectionLabel(title: "Reasoning", accessory: "Thinking mode")
                     Spacer(minLength: 8)
-                    Toggle("", isOn: $model.aiReasoningEnabledDraft)
+                    Toggle("", isOn: $settings.reasoningEnabledDraft)
                         .labelsHidden()
                         .toggleStyle(.switch)
                         .tint(NookColor.accent)
@@ -135,28 +245,34 @@ struct AISettingsOverlay: View {
                         .accessibilityLabel("Thinking mode")
                 }
 
-                if model.aiReasoningEnabledDraft {
+                if settings.reasoningEnabledDraft {
                     HStack(spacing: 6) {
                         ForEach(LLMReasoningEffort.allCases, id: \.self) { effort in
                             reasoningEffortButton(effort)
                         }
                     }
-                    Text("The model thinks first; the final answer is still strict JSON.")
-                        .font(.system(size: 10.5, weight: .regular))
-                        .foregroundStyle(NookColor.textTertiary)
-                } else {
-                    Text("Thinking is disabled. The final answer is still strict JSON.")
-                        .font(.system(size: 10.5, weight: .regular))
-                        .foregroundStyle(NookColor.textTertiary)
                 }
+
+                Text(
+                    settings.reasoningEnabledDraft
+                        ? "The model thinks first. The final answer is still strict JSON."
+                        : "Thinking is disabled. The final answer is still strict JSON."
+                )
+                .font(NookType.micro)
+                .foregroundStyle(NookColor.textTertiary)
             }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: NookRadius.surface, style: .continuous)
+                    .fill(NookColor.surfaceMuted.opacity(0.55))
+            )
         }
     }
 
     private func reasoningEffortButton(_ effort: LLMReasoningEffort) -> some View {
-        let selected = model.aiReasoningEffortDraft == effort
+        let selected = settings.reasoningEffortDraft == effort
         return Button {
-            model.aiReasoningEffortDraft = effort
+            settings.reasoningEffortDraft = effort
         } label: {
             Text(effort.displayName)
                 .font(.system(size: 10, weight: .medium))
@@ -165,48 +281,87 @@ struct AISettingsOverlay: View {
                 .frame(height: 26)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(selected ? NookColor.accentSoft : Color.clear)
+                        .fill(selected ? NookColor.paper : Color.clear)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(
-                            selected ? NookColor.accent.opacity(0.48) : NookColor.border,
-                            lineWidth: 0.8
-                        )
+                        .stroke(selected ? NookColor.border : Color.clear, lineWidth: 0.5)
                 )
         }
         .buttonStyle(.plain)
-        .disabled(!model.aiReasoningEnabledDraft)
+        .disabled(!settings.reasoningEnabledDraft)
         .accessibilityValue(selected ? "Selected" : "Not selected")
     }
 
-    private func presetButton(_ preset: LLMProviderPreset) -> some View {
-        let selected = model.aiPresetDraft == preset
-        return Button {
-            model.aiPresetDraft = preset
-            if !preset.defaultBaseURL.isEmpty {
-                model.aiBaseURLDraft = preset.defaultBaseURL
+    private var connectionStatus: some View {
+        HStack(spacing: 7) {
+            if settings.testState == .testing {
+                ProgressView()
+                    .controlSize(.mini)
+                    .scaleEffect(0.7)
+            } else {
+                Circle()
+                    .fill(connectionColor)
+                    .frame(width: 5, height: 5)
             }
-        } label: {
-            Text(preset.displayName)
-                .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(selected ? NookColor.textPrimary : NookColor.textSecondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 28)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(selected ? NookColor.accentSoft : Color.clear)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(
-                            selected ? NookColor.accent.opacity(0.48) : NookColor.border,
-                            lineWidth: 0.8
-                        )
-                )
+            Text(connectionText)
+                .font(NookType.micro)
+                .foregroundStyle(connectionTextColor)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            if settings.errorMessage != nil {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(NookColor.danger)
+                    .accessibilityLabel("Settings error")
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityValue(selected ? "Selected" : "Not selected")
+        .frame(minHeight: 18, alignment: .leading)
+    }
+
+    private var footer: some View {
+        VStack(spacing: 0) {
+            NookHairline()
+            HStack(spacing: 8) {
+                Button("Clear key") {
+                    settings.clearKey()
+                }
+                .buttonStyle(NookSecondaryButtonStyle())
+                .disabled(!settings.hasAPIKey)
+
+                Spacer(minLength: 8)
+
+                Button("Test connection") {
+                    settings.testConnection()
+                }
+                .buttonStyle(NookSecondaryButtonStyle())
+                .disabled(settings.testState == .testing)
+
+                Button("Cancel", action: onClose)
+                    .buttonStyle(NookSecondaryButtonStyle())
+
+                Button("Save") {
+                    if settings.save() {
+                        onClose()
+                    }
+                }
+                .buttonStyle(NookPrimaryButtonStyle())
+                .keyboardShortcut(.defaultAction)
+            }
+            .padding(.horizontal, 22)
+            .frame(height: 60)
+        }
+    }
+
+    private var fieldBackground: some View {
+        RoundedRectangle(cornerRadius: NookRadius.input, style: .continuous)
+            .fill(NookColor.surfaceMuted.opacity(0.7))
+    }
+
+    private var fieldBorder: some View {
+        RoundedRectangle(cornerRadius: NookRadius.input, style: .continuous)
+            .stroke(NookColor.border, lineWidth: 0.5)
     }
 
     private func settingsField(
@@ -214,139 +369,47 @@ struct AISettingsOverlay: View {
         placeholder: String,
         text: Binding<String>
     ) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.system(size: 10.5, weight: .medium))
+                .font(NookType.caption)
                 .foregroundStyle(NookColor.textSecondary)
             ZStack(alignment: .leading) {
                 if text.wrappedValue.isEmpty {
                     Text(placeholder)
-                        .font(.system(size: 12, weight: .regular, design: .monospaced))
+                        .font(NookType.mono(11.5, weight: .regular))
                         .foregroundStyle(NookColor.textTertiary)
                         .padding(.horizontal, 10)
                         .allowsHitTesting(false)
                 }
                 TextField("", text: text)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 12, weight: .regular, design: .monospaced))
+                    .font(NookType.mono(11.5, weight: .regular))
                     .foregroundStyle(NookColor.textPrimary)
                     .padding(.horizontal, 10)
                     .accessibilityLabel(title)
             }
             .frame(height: 36)
-            .background(
-                RoundedRectangle(cornerRadius: NookRadius.input, style: .continuous)
-                    .fill(NookColor.pane)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: NookRadius.input, style: .continuous)
-                    .stroke(NookColor.border, lineWidth: 0.8)
-            )
+            .background(fieldBackground)
+            .overlay(fieldBorder)
         }
-    }
-
-    private var keyField: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 6) {
-                Text("API key")
-                    .font(.system(size: 10.5, weight: .medium))
-                    .foregroundStyle(NookColor.textSecondary)
-                Spacer()
-                if model.hasAPIKey {
-                    HStack(spacing: 6) {
-                        Text("KEY SAVED IN KEYCHAIN")
-                            .font(.system(size: 8.5, weight: .medium, design: .monospaced))
-                            .tracking(0.5)
-                            .foregroundStyle(NookColor.success.opacity(0.9))
-                        if let suffix = model.apiKeySuffix {
-                            Text("•••• \(suffix)")
-                                .font(.system(size: 8.5, weight: .regular, design: .monospaced))
-                                .foregroundStyle(NookColor.textTertiary)
-                        }
-                    }
-                }
-            }
-
-            HStack(spacing: 6) {
-                ZStack(alignment: .leading) {
-                    if model.aiKeyDraft.isEmpty {
-                        Text("Paste a key to add or replace")
-                            .font(.system(size: 12, weight: .regular, design: .monospaced))
-                            .foregroundStyle(NookColor.textTertiary)
-                            .padding(.horizontal, 10)
-                            .allowsHitTesting(false)
-                    }
-
-                    Group {
-                        if model.isAPIKeyVisible {
-                            TextField("", text: $model.aiKeyDraft)
-                        } else {
-                            SecureField("", text: $model.aiKeyDraft)
-                        }
-                    }
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 12, weight: .regular, design: .monospaced))
-                    .foregroundStyle(NookColor.textPrimary)
-                    .padding(.horizontal, 10)
-                    .accessibilityLabel("API key")
-                }
-                .frame(height: 36)
-                .background(
-                    RoundedRectangle(cornerRadius: NookRadius.input, style: .continuous)
-                        .fill(NookColor.pane)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: NookRadius.input, style: .continuous)
-                        .stroke(NookColor.border, lineWidth: 0.8)
-                )
-
-                Button {
-                    model.isAPIKeyVisible.toggle()
-                } label: {
-                    Image(systemName: model.isAPIKeyVisible ? "eye.slash" : "eye")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(NookColor.textSecondary)
-                        .frame(width: 26, height: 36)
-                }
-                .buttonStyle(.plain)
-                .help(model.isAPIKeyVisible ? "Hide API key" : "Reveal API key while editing")
-                .accessibilityLabel(model.isAPIKeyVisible ? "Hide API key" : "Reveal API key")
-            }
-        }
-    }
-
-    private var connectionStatus: some View {
-        HStack(spacing: 7) {
-            Circle()
-                .fill(connectionColor)
-                .frame(width: 5, height: 5)
-            Text(connectionText)
-                .font(.system(size: 10.5, weight: .regular))
-                .foregroundStyle(connectionTextColor)
-            Spacer()
-            if model.llmConfiguration.isLocalEndpoint {
-                Text("LOCAL ENDPOINT · KEY OPTIONAL")
-                    .font(.system(size: 8.5, weight: .medium, design: .monospaced))
-                    .tracking(0.4)
-                    .foregroundStyle(NookColor.textTertiary)
-            }
-        }
-        .frame(height: 18)
     }
 
     private var connectionText: String {
-        switch model.connectionTestState {
+        if let error = settings.errorMessage {
+            return error
+        }
+        switch settings.testState {
         case .idle:
-            if !model.aiKeyDraft.isEmpty {
+            if !settings.keyDraft.isEmpty {
                 return "Key entered. Save to store it in Keychain."
             }
-            if model.llmConfiguration.isLocalEndpoint, model.llmConfiguration.isComplete {
+            if settings.configuration.isLocalEndpoint, settings.configuration.isComplete {
                 return "Local endpoint ready. Key optional."
             }
-            if model.hasAPIKey, let suffix = model.apiKeySuffix {
-                return "Key saved in Keychain (•••• \(suffix))."
+            if settings.hasAPIKey {
+                return "Key saved in Keychain. AI is ready at Start."
             }
-            return model.hasAPIKey ? "Key saved in Keychain." : "Add an API key to enable AI."
+            return "Add an API key to enable AI phrasing."
         case .testing:
             return "Testing…"
         case .success:
@@ -357,15 +420,12 @@ struct AISettingsOverlay: View {
     }
 
     private var connectionColor: Color {
-        switch model.connectionTestState {
+        if settings.errorMessage != nil { return NookColor.danger }
+        switch settings.testState {
         case .idle:
-            if !model.aiKeyDraft.isEmpty {
-                return NookColor.warning
-            }
-            if model.hasAPIKey {
-                return NookColor.success
-            }
-            if model.llmConfiguration.isLocalEndpoint, model.llmConfiguration.isComplete {
+            if !settings.keyDraft.isEmpty { return NookColor.warning }
+            if settings.hasAPIKey { return NookColor.success }
+            if settings.configuration.isLocalEndpoint, settings.configuration.isComplete {
                 return NookColor.success
             }
             return NookColor.textTertiary
@@ -379,7 +439,8 @@ struct AISettingsOverlay: View {
     }
 
     private var connectionTextColor: Color {
-        if case .failure(_) = model.connectionTestState {
+        if settings.errorMessage != nil { return NookColor.danger }
+        if case .failure = settings.testState {
             return NookColor.danger
         }
         return NookColor.textSecondary
@@ -428,4 +489,8 @@ private extension NSView {
         }
         return nil
     }
+}
+
+final class OverlayState: ObservableObject {
+    @Published var appeared = false
 }

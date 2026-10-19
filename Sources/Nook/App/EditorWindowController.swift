@@ -2,6 +2,7 @@ import AppKit
 import Combine
 import SwiftUI
 
+@MainActor
 final class EditorWindowController: NSWindowController, NSWindowDelegate {
     private let model: AppModel
     private var cancellables = Set<AnyCancellable>()

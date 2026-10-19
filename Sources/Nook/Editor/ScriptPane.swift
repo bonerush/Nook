@@ -92,15 +92,15 @@ struct ScriptPane: View {
 
     private var phraseMap: some View {
         VStack(alignment: .leading, spacing: 10) {
-            LinearHairline()
+            NookHairline()
 
             HStack(alignment: .center, spacing: 10) {
-                LinearSectionLabel(
+                NookSectionLabel(
                     title: "Phrase map",
                     accessory: "First three breaths"
                 )
                 Spacer(minLength: 8)
-                LinearSourceBadge(source: model.planSource)
+                NookSourceBadge(source: model.planSource)
             }
 
             if model.previewLines.isEmpty {
@@ -138,7 +138,7 @@ struct ScriptPane: View {
                         .frame(height: 22)
 
                         if index < model.previewLines.count - 1 {
-                            LinearHairline(color: NookColor.border.opacity(0.55))
+                            NookHairline(color: NookColor.border.opacity(0.55))
                                 .padding(.leading, 30)
                         }
                     }
