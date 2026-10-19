@@ -74,7 +74,7 @@
 | BreathRibbon.swift | 94 | 句子时长条 |
 | InspectorPane.swift | 312 | 四个设置分区 |
 | PaceSegmentedControl.swift | 76 | 三档语速 |
-| AISettingsOverlay.swift | 498 | AI 设置面板 |
+| AISettingsOverlay.swift | 494 | AI 设置面板 |
 | PlanningErrorBanner.swift | 63 | 错误横幅 |
 | EditorStatusBar.swift | 32 | 语速与快捷键提示 |
 | EditorActions.swift | 10 | 编辑器意图 |
@@ -83,9 +83,9 @@
 
 | 文件 | 行数 | 职责 |
 | --- | --- | --- |
-| NookTokens.swift | 98 | 颜色、字体、间距、窗口尺寸 |
-| NookMotion.swift | 25 | 动效曲线与 Reduce Motion |
-| NookComponents.swift | 207 | 通用控件样式 |
+| NookTokens.swift | 94 | 颜色、字体、间距、窗口尺寸 |
+| NookMotion.swift | 22 | 动效曲线与 Reduce Motion |
+| NookComponents.swift | 175 | 通用控件样式 |
 | NookCanvas.swift | 33 | 画布与材质背景 |
 
 ## Teleprompter 目录
