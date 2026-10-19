@@ -16,7 +16,10 @@ struct ScriptTextView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
+        // The AppKit factory configures the text container, resizing, and
+        // scroll-to-caret behavior that a hand-built NSScrollView easily gets
+        // wrong.
+        let scrollView = NSTextView.scrollableTextView()
         scrollView.drawsBackground = false
         scrollView.hasVerticalScroller = false
         scrollView.hasHorizontalScroller = false
@@ -24,9 +27,11 @@ struct ScriptTextView: NSViewRepresentable {
         scrollView.borderType = .noBorder
         scrollView.scrollerStyle = .overlay
         scrollView.verticalScrollElasticity = .allowed
-        scrollView.contentInsets = NSEdgeInsets(top: 0, left: 0, bottom: 14, right: 0)
+        scrollView.contentInsets = NSEdgeInsets(top: 0, left: 0, bottom: 28, right: 0)
 
-        let textView = NSTextView()
+        guard let textView = scrollView.documentView as? NSTextView else {
+            return scrollView
+        }
         textView.drawsBackground = false
         textView.isRichText = false
         textView.importsGraphics = false
@@ -41,6 +46,9 @@ struct ScriptTextView: NSViewRepresentable {
             width: 0,
             height: CGFloat.greatestFiniteMagnitude
         )
+        // The inset is part of the text view's scrollable height. It keeps a
+        // full line of breathing room below the last line, so the paper edge
+        // never cuts a glyph.
         textView.textContainerInset = NSSize(width: 0, height: 3)
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
@@ -56,7 +64,11 @@ struct ScriptTextView: NSViewRepresentable {
         textView.delegate = context.coordinator
         textView.string = text
         applyStyle(to: textView)
+        textView.setSelectedRange(NSRange(location: 0, length: 0))
         context.coordinator.textView = textView
+        DispatchQueue.main.async {
+            textView.scrollRangeToVisible(NSRange(location: 0, length: 0))
+        }
 
         scrollView.documentView = textView
         return scrollView
@@ -113,6 +125,25 @@ struct ScriptTextView: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             text.wrappedValue = textView.string
+
+            let length = (textView.string as NSString).length
+            guard textView.selectedRange().location >= length else { return }
+            DispatchQueue.main.async {
+                Self.revealEnd(textView)
+            }
+        }
+
+        /// Keep one line of breathing room below the caret when the writer is
+        /// at the end of the document. Without this, the last line sits on the
+        /// clip edge and looks cut by the breath-map separator.
+        private static func revealEnd(_ textView: NSTextView) {
+            textView.scrollRangeToVisible(textView.selectedRange())
+            guard let scrollView = textView.enclosingScrollView else { return }
+            let maxY = max(0, textView.frame.height - scrollView.contentView.bounds.height)
+            var origin = scrollView.contentView.bounds.origin
+            origin.y = min(maxY, origin.y + 28)
+            scrollView.contentView.scroll(to: origin)
+            scrollView.reflectScrolledClipView(scrollView.contentView)
         }
     }
 }

@@ -221,14 +221,16 @@ final class PlaybackEngine: NSObject, ObservableObject {
 
     private func startTimer() {
         stopTimer()
+        // 24 Hz keeps the word fill smooth while leaving the main thread
+        // free for typing and for the rest of the app.
         let timer = Timer(
-            timeInterval: 1.0 / 30.0,
+            timeInterval: 1.0 / 24.0,
             target: self,
             selector: #selector(handleTimer),
             userInfo: nil,
             repeats: true
         )
-        timer.tolerance = 0.012
+        timer.tolerance = 0.016
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
     }

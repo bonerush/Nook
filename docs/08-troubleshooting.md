@@ -66,7 +66,7 @@ ad-hoc 签名不需要证书。
 
 Nook 是菜单栏应用。先看菜单栏图标。
 
-点击图标，选择打开编辑器。
+点击图标，选择打开编辑窗口。
 
 也可以按 ⌃⌥E。
 
@@ -75,7 +75,7 @@ Nook 是菜单栏应用。先看菜单栏图标。
 按顺序检查：
 
 1. 屏幕是否有刘海。
-2. 面板是否被 ⌃⌥H 隐藏。
+2. 是否用 ⌃⌥H 隐藏了面板。
 3. 是否在屏幕共享中。
 4. 是否按了 Start。
 5. 讲稿是否为空。
@@ -87,10 +87,12 @@ Nook 是菜单栏应用。先看菜单栏图标。
 运行：
 
 ~~~bash
-NOOK_DEBUG_LAYOUT=1 ./dist/Nook.app/Contents/MacOS/Nook --preview-sample
+NOOK_DEBUG_LAYOUT=1 ./dist/Nook.app/Contents/MacOS/Nook --preview-sample --preview-start
 ~~~
 
 终端会打印屏幕、刘海和窗口坐标。
+
+面板出现后才会打印。所以命令要加 `--preview-start`。
 
 ## AI 失败
 
@@ -106,7 +108,7 @@ NOOK_DEBUG_LAYOUT=1 ./dist/Nook.app/Contents/MacOS/Nook --preview-sample
 ### 查看诊断日志
 
 ~~~bash
-cat "~/Library/Application Support/Nook/ai-debug.log"
+cat "$HOME/Library/Application Support/Nook/ai-debug.log"
 ~~~
 
 日志只包含元数据。它不包含讲稿和密钥。
@@ -137,17 +139,17 @@ cat "~/Library/Application Support/Nook/ai-debug.log"
 
 ## 文本问题
 
-### 中文被拆错
+### 中文分词不正确
 
 当前分词器以英文为主。中文不会按字切分。
 
-### 引号或破折号被替换
+### 智能引号替换了字符
 
 Nook 关闭了智能引号和智能破折号。
 
 如果旧文本已包含替换字符，请手动修复。
 
-### 粘贴后格式丢失
+### 粘贴后只有纯文本
 
 Nook 只保存纯文本。这是预期行为。
 

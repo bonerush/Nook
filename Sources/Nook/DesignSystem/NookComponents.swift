@@ -31,20 +31,41 @@ struct NookSectionLabel: View {
     }
 }
 
+/// A small pulsing dot for indeterminate work. The app never uses an
+/// infinite spinner; Reduce Motion shows a static dot instead.
+struct NookPulseDot: View {
+    var color: Color = NookColor.accent
+    var size: CGFloat = 6
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if reduceMotion {
+            Circle()
+                .fill(color)
+                .frame(width: size, height: size)
+                .opacity(0.8)
+        } else {
+            Circle()
+                .fill(color)
+                .frame(width: size, height: size)
+                .phaseAnimator([false, true]) { dot, phase in
+                    dot.opacity(phase ? 0.35 : 1)
+                } animation: { _ in
+                    .easeInOut(duration: 0.7)
+                }
+        }
+    }
+}
+
 struct NookChip: View {
     let text: String
     var color: Color = NookColor.textTertiary
     var showsDot = true
-    var isBusy = false
 
     var body: some View {
         HStack(spacing: 6) {
-            if isBusy {
-                ProgressView()
-                    .controlSize(.mini)
-                    .scaleEffect(0.68)
-                    .tint(color)
-            } else if showsDot {
+            if showsDot {
                 Circle()
                     .fill(color)
                     .frame(width: 6, height: 6)

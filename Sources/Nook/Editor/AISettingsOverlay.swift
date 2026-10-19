@@ -7,27 +7,13 @@ struct AISettingsOverlay: View {
     @ObservedObject var settings: AISettingsModel
     let onClose: () -> Void
 
-    @ObservedObject private var state = EntranceState()
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     var body: some View {
         ZStack {
             Color.black.opacity(0.16)
                 .ignoresSafeArea()
                 .onTapGesture(perform: onClose)
-                .opacity(state.visible ? 1 : 0)
 
             card
-                .scaleEffect(state.visible ? 1 : 0.985)
-                .opacity(state.visible ? 1 : 0)
-                .offset(y: state.visible ? 0 : 8)
-        }
-        .onAppear {
-            withAnimation(
-                NookMotion.resolved(NookMotion.entrance, reduceMotion: reduceMotion)
-            ) {
-                state.visible = true
-            }
         }
         .onExitCommand(perform: onClose)
     }
@@ -123,7 +109,7 @@ struct AISettingsOverlay: View {
         } label: {
             Text(preset.displayName)
                 .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(selected ? NookColor.accent : NookColor.textSecondary)
+                .foregroundStyle(selected ? NookColor.textPrimary : NookColor.textSecondary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 28)
                 .background(
@@ -217,7 +203,7 @@ struct AISettingsOverlay: View {
                 .accessibilityLabel(settings.isKeyVisible ? "Hide API key" : "Reveal API key")
             }
 
-            Text("At Start, Nook sends tokens and budget fields to this endpoint. The key never leaves Keychain.")
+            Text("Stored in Keychain. Read only to sign requests to this endpoint.")
                 .font(NookType.micro)
                 .foregroundStyle(NookColor.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -298,9 +284,7 @@ struct AISettingsOverlay: View {
     private var connectionStatus: some View {
         HStack(spacing: 7) {
             if settings.testState == .testing {
-                ProgressView()
-                    .controlSize(.mini)
-                    .scaleEffect(0.7)
+                NookPulseDot(color: NookColor.warning)
             } else {
                 Circle()
                     .fill(connectionColor)

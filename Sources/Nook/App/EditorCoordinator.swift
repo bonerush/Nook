@@ -64,6 +64,7 @@ final class EditorCoordinator {
         guard let window = editorController?.window else { return }
         guard animated else {
             window.orderOut(nil)
+            discardEditorWindow()
             return
         }
         NSAnimationContext.runAnimationGroup { context in
@@ -75,8 +76,19 @@ final class EditorCoordinator {
                 guard generation == self.hideGeneration else { return }
                 window.orderOut(nil)
                 window.alphaValue = 1
+                self.discardEditorWindow()
             }
         }
+    }
+
+    /// The editor is a full SwiftUI tree, so keeping it alive while the panel
+    /// runs doubles the app's memory for no benefit. Release it once hidden and
+    /// rebuild it on demand; AppModel holds the only state that matters.
+    private func discardEditorWindow() {
+        guard let controller = editorController else { return }
+        editorController = nil
+        controller.window?.contentViewController = nil
+        controller.close()
     }
 
     func resizeWindow(to size: CGSize) {

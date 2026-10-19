@@ -154,7 +154,9 @@ final class TeleprompterController {
             engine.pause()
         }
 
-        startHoverTracking()
+        if ProcessInfo.processInfo.environment["NOOK_NO_HOVER"] != "1" {
+            startHoverTracking()
+        }
         debugLayoutIfNeeded()
     }
 

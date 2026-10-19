@@ -86,7 +86,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
         visibilityItem = item("隐藏提词窗", action: #selector(togglePanelAction))
         statusMenu.addItem(visibilityItem)
-        captureItem = item("屏幕共享时隐藏", action: #selector(toggleCaptureAction))
+        captureItem = item("屏幕共享时尽力隐藏", action: #selector(toggleCaptureAction))
         statusMenu.addItem(captureItem)
 
         statusMenu.addItem(.separator())

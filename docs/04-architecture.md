@@ -49,7 +49,7 @@ Sources/Nook/
 
 ## 谁创建谁
 
-AppDelegate 是唯一的组装点。
+AppDelegate 是主要组装点。
 
 它按顺序创建：
 
@@ -60,7 +60,9 @@ AppDelegate 是唯一的组装点。
 5. ApplicationMenuController。
 6. MenuBarController 与 HotKeyRouter。
 
-其他对象不创建窗口和控制器。
+EditorCoordinator 会按需创建 EditorWindowController。
+
+除此之外，其他对象不创建窗口和控制器。
 
 ## 数据流
 
@@ -71,9 +73,10 @@ AppDelegate 是唯一的组装点。
 1. 文本进入 AppModel。
 2. AppModel 写入 PreferencesStore。
 3. 160 毫秒后开始重建。
-4. ScriptDocumentBuilder 调用分词器和规划器。
-5. 结果写入 PromptDocument。
-6. 界面读取 PromptDocument。
+4. AppModel 调用分词器。
+5. ScriptDocumentBuilder 选择计划并生成文档。
+6. 结果写入 PromptDocument。
+7. 界面读取 PromptDocument。
 
 提词时：
 
@@ -102,12 +105,15 @@ AppDelegate 是唯一的组装点。
 
 ![AI 断句状态机](assets/ai-state.png)
 
-状态只有四个：
+界面状态有四个：
 
 - idle：空闲。
 - planning：请求中。
 - failed：失败，等待重试。
 - ready：有可用计划。
+
+代码中 AppModel 只存前三个。
+ready 表示有可用计划，并且没有错误。
 
 失败不会自动降级。用户可以选择重试或本地开始。
 
@@ -121,6 +127,25 @@ AppDelegate 是唯一的组装点。
 4. 复制 Info.plist 和图标。
 5. 做 ad-hoc 签名。
 6. 输出 dist/Nook.app。
+
+
+## 面板位置
+
+面板位置由 `TeleprompterController.targetWindowFrame()` 计算。
+
+步骤：
+
+1. 找有刘海的屏幕。
+2. 读取安全区高度和菜单栏高度。
+3. 取两者较大值作为顶部内缩。
+4. 卡片顶部 = 屏幕顶部 − 内缩 − 7。
+5. 窗口宽度 = 卡片宽度 + 两侧边距。
+6. 窗口水平居中。
+7. 窗口底部 = 卡片顶部 − 卡片高度 − 边距。
+
+无刘海屏时回退到主屏幕。
+
+调试命令见 [06 开发指南](06-development.md)。
 
 ## 为什么没有 SwiftPM
 

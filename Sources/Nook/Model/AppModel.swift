@@ -29,7 +29,7 @@ final class AppModel: ObservableObject {
     @Published var wordsPerMinute: Double {
         didSet {
             preferences.wordsPerMinute = wordsPerMinute
-            rebuildDocumentNow()
+            scheduleDocumentRebuild(delay: 0.05)
         }
     }
 
@@ -37,7 +37,7 @@ final class AppModel: ObservableObject {
         didSet {
             preferences.fontSize = fontSize
             invalidateAIPlan()
-            rebuildDocumentNow()
+            scheduleDocumentRebuild(delay: 0.05)
         }
     }
 
@@ -45,7 +45,7 @@ final class AppModel: ObservableObject {
         didSet {
             preferences.cardWidth = cardWidth
             invalidateAIPlan()
-            rebuildDocumentNow()
+            scheduleDocumentRebuild(delay: 0.05)
         }
     }
 
@@ -333,12 +333,12 @@ final class AppModel: ObservableObject {
         isAISettingsPresented = false
     }
 
-    private func scheduleDocumentRebuild() {
+    private func scheduleDocumentRebuild(delay: TimeInterval = 0.16) {
         pendingRebuild?.cancel()
         let work = DispatchWorkItem { [weak self] in
             self?.rebuildDocumentNow()
         }
         pendingRebuild = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 }

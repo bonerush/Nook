@@ -14,8 +14,7 @@ final class InspectorState: ObservableObject {
 
 struct InspectorPane: View {
     @ObservedObject var model: AppModel
-
-    @ObservedObject private var state = InspectorState()
+    @ObservedObject var state: InspectorState
 
     private struct PacePreset: Identifiable {
         let id: String
@@ -142,7 +141,18 @@ struct InspectorPane: View {
                     model.setSpeed(Double(wpm))
                 }
 
-                HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack {
+                        Text("Speed")
+                            .font(NookType.micro)
+                            .foregroundStyle(NookColor.textSecondary)
+                        Spacer()
+                        Text("\(Int(model.wordsPerMinute.rounded()))")
+                            .font(NookType.mono(9.5))
+                            .foregroundStyle(NookColor.textPrimary)
+                            .contentTransition(.numericText())
+                    }
+
                     Slider(
                         value: Binding(
                             get: { model.wordsPerMinute },
@@ -154,12 +164,6 @@ struct InspectorPane: View {
                     .tint(NookColor.accent)
                     .accessibilityLabel("Reading speed")
                     .accessibilityValue("\(Int(model.wordsPerMinute.rounded())) words per minute")
-
-                    Text("\(Int(model.wordsPerMinute.rounded()))")
-                        .font(NookType.mono(10.5))
-                        .foregroundStyle(NookColor.textPrimary)
-                        .frame(width: 26, alignment: .trailing)
-                        .contentTransition(.numericText())
                 }
 
                 Text("Natural English reading pace is the default.")

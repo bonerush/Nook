@@ -59,7 +59,7 @@ struct BreathRibbon: View {
                     .frame(height: 5)
             } else if segments.count > 60 {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(NookColor.accent.opacity(0.45))
+                    .fill(NookColor.accent.opacity(0.62))
                     .frame(height: 5)
             } else {
                 GeometryReader { proxy in
@@ -68,7 +68,7 @@ struct BreathRibbon: View {
                     HStack(spacing: 2) {
                         ForEach(segments) { segment in
                             RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                .fill(NookColor.accent.opacity(0.42))
+                                .fill(NookColor.accent.opacity(0.62))
                                 .frame(
                                     width: max(2, available * CGFloat(segment.duration / total))
                                 )

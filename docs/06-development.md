@@ -42,14 +42,20 @@ build.sh 做五件事：
 | 输出预算 | OpenAICompatibleClient |
 | 快捷键 | NookHotKeyAction 与 ApplicationMenuController |
 
-## 例：修改默认语速
+## 例：修改 Natural 预设
 
-1. 打开 `Sources/NookKit/Storage/PreferencesStore.swift`。
-2. 找到 `registerDefaults`。
-3. 把 `Key.wordsPerMinute: 138.0` 改成目标值。
+1. 打开 `Sources/Nook/Editor/InspectorPane.swift`。
+2. 找到 `PacePreset(id: "natural", title: "Natural", wpm: 138)`。
+3. 把 138 改成 140。
 4. 运行 `./scripts/test.sh`。
 5. 运行 `./scripts/build.sh`。
-6. 启动应用，确认检查器显示新值。
+6. 启动应用。
+7. 点击检查器的 Natural。
+8. 确认语速显示 140。
+
+这个练习不改默认值，所以测试不需要改。
+
+如果你改 `PreferencesStore.registerDefaults`，还要同步修改 `PreferencesStoreTests` 的期望值。
 
 已有用户的旧值不会被覆盖。这是预期行为。
 
@@ -98,10 +104,13 @@ func runExampleTests() {
 设置环境变量：
 
 ~~~bash
-NOOK_DEBUG_LAYOUT=1 ./dist/Nook.app/Contents/MacOS/Nook --preview-sample
+NOOK_DEBUG_LAYOUT=1 ./dist/Nook.app/Contents/MacOS/Nook --preview-sample --preview-start
 ~~~
 
 终端会打印屏幕、刘海和面板的位置。
+
+必须让面板出现，才会打印。
+所以命令要加 `--preview-start`。
 
 ### 网络
 
@@ -163,7 +172,8 @@ log stream --predicate 'process == "Nook"'
 ditto dist/Nook.app /Applications/Nook.app
 ~~~
 
-7. 启动并确认讲稿和设置仍在。
+7. 启动应用。
+8. 确认讲稿和设置仍在。
 
 安装不会清空 UserDefaults 或 Keychain。
 

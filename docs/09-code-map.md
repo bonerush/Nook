@@ -41,87 +41,90 @@
 | 歌词 | Nook/Teleprompter/KaraokeLyricsView.swift |
 | 播放时钟 | Nook/Teleprompter/PlaybackEngine.swift |
 
+行数会变化，本文不记录行数。
+
 ## App 目录
 
-| 文件 | 行数 | 职责 |
-| --- | --- | --- |
-| NookMain.swift | 15 | 创建 NSApplication |
-| AppDelegate.swift | 131 | 组装对象，处理生命周期 |
-| EditorCoordinator.swift | 254 | 编辑窗口与提词面板的交接 |
-| EditorWindowController.swift | 118 | 创建窗口，设置焦点 |
-| MenuBarController.swift | 171 | 状态栏图标与菜单 |
-| ApplicationMenuController.swift | 222 | 主菜单与命令 |
-| HotKeyRouter.swift | 44 | 全局快捷键分发 |
-| GlobalHotKeys.swift | 192 | Carbon 热键注册 |
-| PreviewHarness.swift | 185 | 预览模式与演示场景 |
+| 文件 | 职责 |
+| --- | --- |
+| NookMain.swift | 创建 NSApplication |
+| AppDelegate.swift | 组装对象，处理生命周期 |
+| EditorCoordinator.swift | 编辑窗口与提词面板的交接 |
+| EditorWindowController.swift | 创建窗口，设置焦点 |
+| MenuBarController.swift | 状态栏图标与菜单 |
+| ApplicationMenuController.swift | 主菜单与命令 |
+| HotKeyRouter.swift | 全局快捷键分发 |
+| GlobalHotKeys.swift | Carbon 热键注册 |
+| PreviewHarness.swift | 预览模式与演示场景 |
 
 ## Model 目录
 
-| 文件 | 行数 | 职责 |
-| --- | --- | --- |
-| AppModel.swift | 344 | 讲稿、语速、计划与开始流程 |
-| AISettingsModel.swift | 259 | 密钥草稿、保存与连接测试 |
-| NookTime.swift | 24 | 时间格式化 |
+| 文件 | 职责 |
+| --- | --- |
+| AppModel.swift | 讲稿、语速、计划与开始流程 |
+| AISettingsModel.swift | 密钥草稿、保存与连接测试 |
+| NookTime.swift | 时间格式化 |
 
 ## Editor 目录
 
-| 文件 | 行数 | 职责 |
-| --- | --- | --- |
-| EditorView.swift | 87 | 主界面布局 |
-| EditorToolbar.swift | 150 | 品牌、状态、Start |
-| ScriptPaper.swift | 167 | 纸张、标题、空状态 |
-| ScriptTextView.swift | 118 | NSTextView 包装 |
-| BreathRibbon.swift | 94 | 句子时长条 |
-| InspectorPane.swift | 312 | 四个设置分区 |
-| PaceSegmentedControl.swift | 76 | 三档语速 |
-| AISettingsOverlay.swift | 494 | AI 设置面板 |
-| PlanningErrorBanner.swift | 63 | 错误横幅 |
-| EditorStatusBar.swift | 32 | 语速与快捷键提示 |
-| EditorActions.swift | 10 | 编辑器意图 |
+| 文件 | 职责 |
+| --- | --- |
+| EditorView.swift | 主界面布局 |
+| EditorToolbar.swift | 品牌、状态、Start |
+| ScriptPaper.swift | 纸张、标题、空状态 |
+| ScriptTextView.swift | NSTextView 包装 |
+| BreathRibbon.swift | 句子时长条 |
+| InspectorPane.swift | 四个设置分区 |
+| PaceSegmentedControl.swift | 三档语速 |
+| AISettingsOverlay.swift | AI 设置面板 |
+| PlanningErrorBanner.swift | 错误横幅 |
+| EditorStatusBar.swift | 语速与快捷键提示 |
+| EditorActions.swift | 编辑窗口意图 |
+| PlanningActivityLine.swift | AI 请求中的活动线 |
 
 ## DesignSystem 目录
 
-| 文件 | 行数 | 职责 |
-| --- | --- | --- |
-| NookTokens.swift | 94 | 颜色、字体、间距、窗口尺寸 |
-| NookMotion.swift | 22 | 动效曲线与 Reduce Motion |
-| NookComponents.swift | 175 | 通用控件样式 |
-| NookCanvas.swift | 33 | 画布与材质背景 |
+| 文件 | 职责 |
+| --- | --- |
+| NookTokens.swift | 颜色、字体、间距、窗口尺寸 |
+| NookMotion.swift | 动效曲线与 Reduce Motion |
+| NookComponents.swift | 通用控件样式 |
+| NookCanvas.swift | 画布与材质背景 |
 
 ## Teleprompter 目录
 
-| 文件 | 行数 | 职责 |
-| --- | --- | --- |
-| TeleprompterController.swift | 341 | 面板定位、显示与隐藏 |
-| TeleprompterView.swift | 48 | 玻璃卡片内容 |
-| KaraokeLyricsView.swift | 153 | 三行歌词与填光 |
-| LyricProgressRail.swift | 77 | 进度条与时间 |
-| OfficialGlassSurface.swift | 42 | 官方玻璃与回退 |
-| NookVisualEffectView.swift | 31 | 材质回退 |
-| PlaybackEngine.swift | 289 | 播放时钟与进度 |
+| 文件 | 职责 |
+| --- | --- |
+| TeleprompterController.swift | 面板定位、显示与隐藏 |
+| TeleprompterView.swift | 玻璃卡片内容 |
+| KaraokeLyricsView.swift | 三行歌词与填光 |
+| LyricProgressRail.swift | 进度条与时间 |
+| OfficialGlassSurface.swift | 官方玻璃与回退 |
+| NookVisualEffectView.swift | 材质回退 |
+| PlaybackEngine.swift | 播放时钟与进度 |
 
 ## NookKit 目录
 
-| 文件 | 行数 | 职责 |
-| --- | --- | --- |
-| Core/SpeechScript.swift | 87 | 词元模型与分词器版本 |
-| Core/PhrasePlan.swift | 228 | 计划、预算、校验与修复 |
-| Core/PhraseLayout.swift | 90 | 字体宽度测量 |
-| Core/PromptMetrics.swift | 45 | 面板尺寸指标 |
-| Core/PromptDocument.swift | 169 | 提词文档模型 |
-| Core/PromptScriptBuilder.swift | 531 | 旧版文本构建器 |
-| Core/SampleScript.swift | 15 | 示例讲稿 |
-| Planning/PromptComposer.swift | 216 | 计划到时间轴 |
-| Planning/HeuristicPhrasePlanner.swift | 24 | 本地断句 |
-| Planning/PhrasePlanningPrompt.swift | 67 | prompt 版本与文本 |
-| Planning/AIPlanningCoordinator.swift | 226 | 缓存、请求、校验状态机 |
-| Planning/ScriptDocumentBuilder.swift | 25 | 文档构建入口 |
-| Providers/LLMConfiguration.swift | 170 | endpoint 与 provider |
-| Providers/HTTPTransport.swift | 58 | 传输协议 |
-| Providers/OpenAICompatibleClient.swift | 256 | URLSession 请求与解码 |
-| Storage/KeychainStore.swift | 78 | Keychain |
-| Storage/PhrasePlanCache.swift | 148 | LRU 缓存 |
-| Storage/PreferencesStore.swift | 59 | UserDefaults |
+| 文件 | 职责 |
+| --- | --- |
+| Core/SpeechScript.swift | 词元模型与分词器版本 |
+| Core/PhrasePlan.swift | 计划、预算、校验与修复 |
+| Core/PhraseLayout.swift | 字体宽度测量 |
+| Core/PromptMetrics.swift | 面板尺寸指标 |
+| Core/PromptDocument.swift | 提词文档模型 |
+| Core/PromptScriptBuilder.swift | 旧版文本构建器 |
+| Core/SampleScript.swift | 示例讲稿 |
+| Planning/PromptComposer.swift | 计划到时间轴 |
+| Planning/HeuristicPhrasePlanner.swift | 本地断句 |
+| Planning/PhrasePlanningPrompt.swift | prompt 版本与文本 |
+| Planning/AIPlanningCoordinator.swift | 缓存、请求、校验状态机 |
+| Planning/ScriptDocumentBuilder.swift | 文档构建入口 |
+| Providers/LLMConfiguration.swift | endpoint 与 provider |
+| Providers/HTTPTransport.swift | 传输协议 |
+| Providers/OpenAICompatibleClient.swift | URLSession 请求与解码 |
+| Storage/KeychainStore.swift | Keychain |
+| Storage/PhrasePlanCache.swift | LRU 缓存 |
+| Storage/PreferencesStore.swift | UserDefaults |
 
 ## 测试目录
 
@@ -130,6 +133,8 @@
 | TestHarness.swift | check 与 checkEqual |
 | SpeechScriptTests.swift | 分词与句子 |
 | PhrasePlanTests.swift | 校验与修复 |
+| PhrasePlanningPromptTests.swift | prompt 内容与版本 |
+| PausePolicyTests.swift | 停顿策略 |
 | PromptComposerTests.swift | 时间轴 |
 | PreferencesStoreTests.swift | 偏好与钳制 |
 | ScriptDocumentBuilderTests.swift | 文档构建 |

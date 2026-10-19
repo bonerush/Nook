@@ -42,7 +42,13 @@ struct EditorToolbar: View {
         .padding(.trailing, 20)
         .frame(height: NookMetrics.toolbarHeight)
         .background(NookChromeBackground())
-        .overlay(alignment: .bottom) { NookHairline() }
+        .overlay(alignment: .bottom) {
+            if isPlanning {
+                PlanningActivityLine()
+            } else {
+                NookHairline()
+            }
+        }
     }
 
     private var brand: some View {
@@ -81,10 +87,7 @@ struct EditorToolbar: View {
         } label: {
             HStack(spacing: 7) {
                 if isPlanning {
-                    ProgressView()
-                        .controlSize(.mini)
-                        .scaleEffect(0.66)
-                        .tint(.white)
+                    NookPulseDot(color: .white, size: 7)
                     Text("Phrasing…")
                 } else {
                     Image(systemName: "play.fill")
@@ -125,10 +128,7 @@ struct AIStatusChip: View {
         let status = status
         HStack(spacing: 6) {
             if status.busy {
-                ProgressView()
-                    .controlSize(.mini)
-                    .scaleEffect(0.64)
-                    .tint(status.color)
+                NookPulseDot(color: status.color)
             } else {
                 Circle()
                     .fill(status.color)

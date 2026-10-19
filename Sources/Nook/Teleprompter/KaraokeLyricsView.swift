@@ -32,7 +32,6 @@ struct KaraokeWordView: View {
                             )
                     }
                 )
-                .shadow(color: .white.opacity(0.22), radius: 6)
                 .opacity(activeLine ? 1 : 0)
         }
         .font(.system(size: fontSize, weight: .semibold))
@@ -66,16 +65,23 @@ struct KaraokeLyricsView: View {
                     .foregroundStyle(.white.opacity(0.42))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
+                // Only the lines near the reading position are laid out. A long
+                // script must not cost hundreds of text views on every tick.
+                let safeActive = min(document.lines.count - 1, max(0, activeLine))
+                let lower = max(0, safeActive - 3)
+                let upper = min(document.lines.count - 1, safeActive + 3)
+                let visible = document.lines[lower...upper]
+
                 VStack(spacing: lineGap) {
-                    ForEach(document.lines) { line in
-                        lyricLine(line, active: line.id == activeLine)
+                    ForEach(visible) { line in
+                        lyricLine(line, active: line.id == safeActive)
                             .frame(height: lineHeight)
                     }
                 }
                 .frame(width: proxy.size.width)
                 .offset(
                     y: focusY
-                        - CGFloat(activeLine) * rowHeight
+                        - CGFloat(safeActive - lower) * rowHeight
                         - lineHeight / 2
                 )
                 .animation(
@@ -133,7 +139,7 @@ struct KaraokeLyricsView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .opacity(active ? 1 : (distance < 0 ? 0.20 : 0.32))
+        .opacity(active ? 1 : (distance < 0 ? 0.30 : 0.42))
         .blur(radius: active ? 0 : (distance < 0 ? 0.8 : 0.4))
         .scaleEffect(active || reduceMotion ? 1 : 0.985)
         .shadow(color: .black.opacity(0.35), radius: 2)

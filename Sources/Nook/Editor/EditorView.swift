@@ -5,6 +5,7 @@ struct EditorView: View {
     let actions: EditorActions
 
     @ObservedObject private var entrance = EntranceState()
+    @ObservedObject private var inspectorState = InspectorState()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var isPlanning: Bool {
@@ -30,7 +31,7 @@ struct EditorView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
 
                     if model.isInspectorVisible {
-                        InspectorPane(model: model)
+                        InspectorPane(model: model, state: inspectorState)
                             .transition(
                                 .asymmetric(
                                     insertion: .move(edge: .trailing).combined(with: .opacity),
@@ -66,6 +67,7 @@ struct EditorView: View {
                 AISettingsOverlay(settings: model.aiSettings) {
                     model.closeAISettings()
                 }
+                .transition(.opacity.combined(with: .scale(scale: 0.985)))
                 .zIndex(10)
             }
         }
@@ -75,6 +77,10 @@ struct EditorView: View {
         .animation(
             NookMotion.resolved(NookMotion.inspector, reduceMotion: reduceMotion),
             value: model.isInspectorVisible
+        )
+        .animation(
+            NookMotion.resolved(.smooth(duration: 0.3), reduceMotion: reduceMotion),
+            value: model.isAISettingsPresented
         )
         .onExitCommand {
             if model.isAISettingsPresented {

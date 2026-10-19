@@ -34,6 +34,7 @@ final class PreviewHarness {
 
     func installBackdropIfNeeded() {
         guard isPreviewSample, isDemo, backdrop == nil else { return }
+        guard !CommandLine.arguments.contains("--no-backdrop") else { return }
         let screen = NSScreen.screens.first { $0.safeAreaInsets.top > 0 } ?? NSScreen.main
         guard let screen else { return }
         let window = NSWindow(
@@ -83,6 +84,22 @@ final class PreviewHarness {
                     try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                     action()
                 }
+            }
+        }
+
+        if CommandLine.arguments.contains("--preview-reopen") {
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                editor.openEditor()
+            }
+        }
+
+        if CommandLine.arguments.contains("--preview-settings-update") {
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                model.openAISettings()
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                model.adjustSpeed(by: 5)
             }
         }
 

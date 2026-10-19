@@ -54,6 +54,10 @@ Nook 是菜单栏应用。它不显示 Dock 图标。
 
 ## 第一次提词
 
+第一次启动时，稿纸是空的。
+
+![空状态：粘贴讲稿或加载示例](assets/editor-empty.png)
+
 1. 在稿纸中输入或粘贴英文讲稿。
 2. 在检查器中选择 Natural。
 3. 按 ⌘↩。
@@ -63,6 +67,8 @@ Nook 是菜单栏应用。它不显示 Dock 图标。
 如果还没有 API key，Nook 会使用本地断句。面板来源显示 LOCAL。
 
 ## 配置 AI（可选）
+
+![AI 设置：provider、endpoint 和密钥](assets/ai-settings.png)
 
 1. 点击顶栏齿轮，或按 ⌘,。
 2. 选择 provider。

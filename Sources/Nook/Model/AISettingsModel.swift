@@ -46,6 +46,7 @@ final class AISettingsModel: ObservableObject {
     private let keychain: SecretStore
     private let coordinator: AIPlanningCoordinator
     private var testTask: Task<Void, Never>?
+    private var testGeneration = 0
 
     init(
         defaults: UserDefaults = .standard,
@@ -81,6 +82,7 @@ final class AISettingsModel: ObservableObject {
 
     func open() {
         testTask?.cancel()
+        testGeneration += 1
         baseURLDraft = configuration.baseURLString
         modelDraft = configuration.model
         presetDraft = configuration.preset
@@ -94,6 +96,7 @@ final class AISettingsModel: ObservableObject {
 
     func close() {
         testTask?.cancel()
+        testGeneration += 1
         keyDraft = ""
         errorMessage = nil
         testState = .idle
@@ -193,6 +196,8 @@ final class AISettingsModel: ObservableObject {
         }
 
         testTask?.cancel()
+        testGeneration += 1
+        let generation = testGeneration
         testState = .testing
         let sample = ScriptTokenizer.tokenize("Hello. This is a short connection test.")
         testTask = Task { [weak self] in
@@ -204,8 +209,10 @@ final class AISettingsModel: ObservableObject {
                     sample: sample,
                     wordsPerMinute: 120
                 )
+                guard generation == self.testGeneration else { return }
                 self.testState = .success
             } catch {
+                guard generation == self.testGeneration else { return }
                 self.testState = .failure(Self.message(for: error))
             }
         }

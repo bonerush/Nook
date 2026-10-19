@@ -96,8 +96,20 @@ struct ScriptPaper: View {
     private var editorArea: some View {
         ZStack(alignment: .topLeading) {
             ScriptTextView(text: scriptBinding)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .black, location: 0),
+                            .init(color: .black, location: 0.93),
+                            .init(color: .clear, location: 1)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .padding(.horizontal, 33)
                 .padding(.top, 2)
+                .padding(.bottom, 8)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if model.script.isEmpty {
@@ -105,15 +117,6 @@ struct ScriptPaper: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .bottom) {
-            LinearGradient(
-                colors: [NookColor.paper.opacity(0), NookColor.paper],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 16)
-            .allowsHitTesting(false)
-        }
     }
 
     private var emptyState: some View {
