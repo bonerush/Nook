@@ -17,11 +17,22 @@ APP="$ROOT/dist/Nook.app"
 mkdir -p "$BUILD_DIR"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-echo "Compiling Nook…"
+# Sources are grouped by module. Collect them with find so every subdirectory
+# participates without editing this script.
+SOURCE_FILES=()
+while IFS= read -r file; do
+    SOURCE_FILES+=("$file")
+done < <(find "$ROOT/Sources" -name '*.swift' -print | sort)
+
+if [[ ${#SOURCE_FILES[@]} -eq 0 ]]; then
+    echo "No Swift sources found" >&2
+    exit 1
+fi
+
+echo "Compiling Nook (${#SOURCE_FILES[@]} files)…"
 swiftc -parse-as-library -O -whole-module-optimization \
     -sdk "$SDK" -target "$TARGET" \
-    "$ROOT"/Sources/NookKit/*.swift \
-    "$ROOT"/Sources/Nook/*.swift \
+    "${SOURCE_FILES[@]}" \
     -o "$BIN" \
     -framework AppKit \
     -framework SwiftUI \

@@ -11,11 +11,21 @@ if [[ "$(uname -m)" == "x86_64" ]]; then
 fi
 
 mkdir -p "$ROOT/.build/dev"
+
+KIT_FILES=()
+while IFS= read -r file; do
+    KIT_FILES+=("$file")
+done < <(find "$ROOT/Sources/NookKit" -name '*.swift' -print | sort)
+
+TEST_FILES=()
+while IFS= read -r file; do
+    TEST_FILES+=("$file")
+done < <(find "$ROOT/Tests/NookKitTests" -name '*.swift' -print | sort)
+
 echo "Running prompt-engine checks…"
 swiftc -O \
     -sdk "$SDK" -target "$TARGET" \
-    "$ROOT"/Sources/NookKit/*.swift \
-    "$ROOT"/Tests/NookKitTests/*.swift \
+    "${KIT_FILES[@]}" "${TEST_FILES[@]}" \
     -o "$ROOT/.build/dev/nook-tests" \
     -framework AppKit \
     -framework NaturalLanguage \
