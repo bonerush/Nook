@@ -8,6 +8,14 @@
 
 Nook 是一个 macOS 提词器。它把英文讲稿分成短行。开始提词后，面板停在刘海下方。你的视线靠近摄像头。
 
+## 提词面板
+
+<p align="center">
+  <img src="docs/assets/teleprompter-panel.png" alt="提词面板：刘海下方的玻璃面板，逐词填光并显示进度" width="680">
+</p>
+
+<p align="center"><em>面板停在摄像头附近，词语按朗读进度变亮。演示背景为合成图。</em></p>
+
 ## 快速开始
 
 ~~~bash
