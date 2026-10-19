@@ -7,7 +7,7 @@ struct AISettingsOverlay: View {
     @ObservedObject var settings: AISettingsModel
     let onClose: () -> Void
 
-    @ObservedObject private var state = OverlayState()
+    @ObservedObject private var state = EntranceState()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -15,18 +15,18 @@ struct AISettingsOverlay: View {
             Color.black.opacity(0.16)
                 .ignoresSafeArea()
                 .onTapGesture(perform: onClose)
-                .opacity(state.appeared ? 1 : 0)
+                .opacity(state.visible ? 1 : 0)
 
             card
-                .scaleEffect(state.appeared ? 1 : 0.985)
-                .opacity(state.appeared ? 1 : 0)
-                .offset(y: state.appeared ? 0 : 8)
+                .scaleEffect(state.visible ? 1 : 0.985)
+                .opacity(state.visible ? 1 : 0)
+                .offset(y: state.visible ? 0 : 8)
         }
         .onAppear {
             withAnimation(
                 NookMotion.resolved(NookMotion.entrance, reduceMotion: reduceMotion)
             ) {
-                state.appeared = true
+                state.visible = true
             }
         }
         .onExitCommand(perform: onClose)
@@ -491,8 +491,4 @@ private extension NSView {
         }
         return nil
     }
-}
-
-final class OverlayState: ObservableObject {
-    @Published var appeared = false
 }

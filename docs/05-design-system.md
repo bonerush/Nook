@@ -98,13 +98,11 @@
 
 - NookHairline：0.5 pt 分隔线。
 - NookSectionLabel：区块标题。
-- NookCard：白色卡片。
 - NookChip：状态胶囊。
 - NookKeycap：快捷键键帽。
 - NookPrimaryButtonStyle：蓝色胶囊按钮。
 - NookSecondaryButtonStyle：描边按钮。
 - NookIconButtonStyle：图标按钮。
-- NookLinkButtonStyle：文字按钮。
 
 组件不带业务逻辑。
 

@@ -51,9 +51,10 @@ open dist/Nook.app
 环境要求：macOS 14 或更新版本。需要 Xcode Command Line Tools。
 
 ~~~bash
-./scripts/test.sh     # 运行 558 项检查
-./scripts/build.sh    # 生成 dist/Nook.app
-./scripts/run.sh      # 构建并启动
+./scripts/test.sh        # 运行 558 项检查
+./scripts/build.sh       # 生成 dist/Nook.app
+./scripts/run.sh         # 构建并启动
+./scripts/check-docs.py  # 检查文档规则
 ~~~
 
 ## 数据与隐私

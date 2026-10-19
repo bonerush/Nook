@@ -8,11 +8,8 @@ enum NookMotion {
     static let inspector = Animation.snappy(duration: 0.3)
     static let selection = Animation.snappy(duration: 0.22)
     static let press = Animation.snappy(duration: 0.18)
-    static let hover = Animation.smooth(duration: 0.16)
     static let counter = Animation.snappy(duration: 0.28)
     static let document = Animation.snappy(duration: 0.30)
-    static let panel = Animation.smooth(duration: 0.42)
-    static let handoff = Animation.snappy(duration: 0.20)
 
     /// Reduce Motion replaces movement with a near-instant fade.
     static func resolved(_ animation: Animation, reduceMotion: Bool) -> Animation? {

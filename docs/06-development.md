@@ -127,6 +127,20 @@ NOOK_DEBUG_LAYOUT=1 ./dist/Nook.app/Contents/MacOS/Nook --preview-sample
 log stream --predicate 'process == "Nook"'
 ~~~
 
+## 重新生成图表
+
+图表源文件在 `docs/assets/*.drawio`。
+
+重新生成需要 draw.io 桌面版。
+
+~~~bash
+./scripts/make-diagrams.py
+~~~
+
+脚本会写入 .drawio 文件并导出 2x PNG。
+
+导出后请逐张查看。确认文字不重叠。
+
 ## 截图
 
 1. 用 `--preview-sample` 启动。

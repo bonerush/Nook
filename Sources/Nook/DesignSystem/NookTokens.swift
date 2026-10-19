@@ -22,11 +22,8 @@ enum NookColor {
     static let canvasTop = Color.nookHex(0xF5F5F7)
     static let canvasBottom = Color.nookHex(0xFAFAFC)
     static let paper = Color.nookHex(0xFFFFFF)
-    static let pane = Color.nookHex(0xF5F5F7)
     static let surface = Color.nookHex(0xFFFFFF)
     static let surfaceMuted = Color.nookHex(0xF2F2F4)
-    static let raised = Color.nookHex(0xFFFFFF)
-    static let raisedHover = Color.nookHex(0xECECF0)
 
     // Lines
     static let border = Color.nookHex(0xE5E5EA)
@@ -48,7 +45,6 @@ enum NookColor {
     static let warning = Color.nookHex(0xB25000)
     static let danger = Color.nookHex(0xD70015)
 
-    static let ink = Color.nookHex(0xFFFFFF)
 }
 
 /// Type scale. The app targets macOS 14, which has no Dynamic Type; sizes come

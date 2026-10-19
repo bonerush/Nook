@@ -31,28 +31,6 @@ struct NookSectionLabel: View {
     }
 }
 
-/// A rounded white card on the light canvas. The shadow is deliberately faint:
-/// the paper should look like it rests on the desk, not float above it.
-struct NookCard<Content: View>: View {
-    var padding: CGFloat = NookSpace.lg
-    var radius: CGFloat = NookRadius.surface
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        content
-            .padding(padding)
-            .background(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(NookColor.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .stroke(NookColor.border, lineWidth: 0.5)
-            )
-            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
-    }
-}
-
 struct NookChip: View {
     let text: String
     var color: Color = NookColor.textTertiary
@@ -193,15 +171,5 @@ struct NookIconButtonStyle: ButtonStyle {
             .contentShape(Rectangle())
             .opacity(isEnabled ? 1 : 0.5)
             .animation(NookMotion.press, value: configuration.isPressed)
-    }
-}
-
-/// A quiet link-style button used inside empty states and banners.
-struct NookLinkButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(NookColor.accent)
-            .opacity(configuration.isPressed ? 0.6 : 1)
     }
 }
